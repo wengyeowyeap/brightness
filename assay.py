@@ -1,4 +1,3 @@
-from ttkwidgets.autocomplete import AutocompleteCombobox
 from tkinter import *  
 from tkinter import ttk
 
@@ -7,69 +6,114 @@ def donothing():
   button = Button(filewin, text="Do nothing button")
   button.pack()
 
-# Function for checking the key pressed and updating the listbox 
-def checkkey(event): 
-  if event.keysym=='Down':
-    lb.focus_set()
-    lb.select_set(0) #This only sets focus on the first item.
-    lb.event_generate("<<ListboxSelect>>")
-  elif event.keysym=='Return':
-    item_code_entry.focus_set()
-  else:
-    value = event.widget.get() 
-    print(value)     
-    # get data from l 
-    if value == '': 
-        data = l
-        update(data)
-        lb.pack_forget()
-    else: 
-        data = [] 
-        for item in l: 
-            if value.lower() in item.lower(): 
-                data.append(item)
-                update(data)
-                lb.pack()
-   
-def update(data): 
-  # clear previous data 
-  lb.delete(0, 'end') 
-  
-  # put new data 
-  for item in data: 
-      lb.insert('end', item) 
+class NewFormCode(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("New Formcode")
+    self.geometry("280x450") 
+    # Function for checking the key pressed and updating the listbox 
+    def checkkey(event): 
+      if event.keysym=='Down':
+        lb.focus_set()
+        lb.select_set(0) #This only sets focus on the first item.
+        lb.event_generate("<<ListboxSelect>>")
+      elif event.keysym=='Return':
+        item_code_entry.focus_set()
+      else:
+        value = event.widget.get() 
+        print(value)     
+        # get data from l 
+        if value == '': 
+            data = l
+            update(data)
+            lb.pack_forget()
+        else: 
+            data = [] 
+            for item in l: 
+                if value.lower() in item.lower(): 
+                    data.append(item)
+                    update(data)
+                    lb.pack()
+      
+    def update(data): 
+      # clear previous data 
+      lb.delete(0, 'end') 
+      
+      # put new data 
+      for item in data: 
+          lb.insert('end', item) 
 
-def selectcustomer(event):
-  selection = event.widget.curselection()
-  lb.pack_forget()
-  if selection:
-      index = selection[0]
-      customer.set(event.widget.get(index))
-      customer_entry.focus_set()
+    def selectcustomer(event):
+      selection = event.widget.curselection()
+      lb.pack_forget()
+      if selection:
+          index = selection[0]
+          customer.set(event.widget.get(index))
+          customer_entry.focus_set()
 
-# Driver code 
-l = ['C','C++','Java', 
-     'Python','Perl', 
-     'PHP','ASP','JS',
-     "apple", "banana", "cherry", 
-     "orange", "kiwi", "melon", "mango",
-    "Rice", "Chickpeas", "Pulses", "bread", "meat",
-    "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-    "Chicken Pie", "Apple Pie", "Pudding" ]
+    # Driver code 
+    l = ['C','C++','Java', 
+        'Python','Perl', 
+        'PHP','ASP','JS',
+        "apple", "banana", "cherry", 
+        "orange", "kiwi", "melon", "mango",
+        "Rice", "Chickpeas", "Pulses", "bread", "meat",
+        "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
+        "Chicken Pie", "Apple Pie", "Pudding" ]
 
-def focusweight(event):
-  sample_weight_entry.focus_set() 
+    def focusweight(event):
+      sample_weight_entry.focus_set() 
 
-def submit(event): 
-  code=item_code_entry.get() 
-  weight=sample_weight_entry.get()
-    
-  print("The code is : " + code) 
-  print("The weight is : " + weight) 
-    
-  item_code.set("") 
-  sample_weight.set("") 
+    def submit(event): 
+      code=item_code_entry.get() 
+      weight=sample_weight_entry.get()
+        
+      print("The code is : " + code) 
+      print("The weight is : " + weight) 
+        
+      item_code.set("") 
+      sample_weight.set("") 
 
+    #New Formcode Button
+    new_record = Button(self, text = 'New Formcode', command = self.destroy)
+    new_record.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+    #Close Button
+    close_new_record = Button(self, text = 'Close', command = self.destroy)
+    close_new_record.grid(column = 1,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+
+    Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+    Label(self,  text ="VAR - New Form Code").grid(column = 1,  row = 1, pady = (10,0))
+    Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+    Label(self,  text ="VAR - Current date").grid(column = 1,  row = 2, pady = (10,0))
+    Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+    item_code = StringVar()
+    item_code_entry = Entry(self, textvariable = item_code)
+    item_code_entry.grid(column = 1,  row = 4)
+    item_code_entry.bind('<Return>', focusweight)
+    Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+    sample_weight = StringVar()
+    sample_weight_entry = Entry(self, textvariable = sample_weight)
+    sample_weight_entry.grid(column = 1,  row = 5)
+    sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
+
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+    # Combobox creation
+    # create a frame 
+    customer_input_frame = Frame(self)
+    customer_input_frame.grid(column = 1,  row = 3, pady = (10,10))
+    # If customer not in list, pop up add new customer window
+    customer = StringVar() 
+    customer_entry = Entry(customer_input_frame, textvariable=customer) 
+    customer_entry.pack() 
+    customer_entry.bind('<KeyRelease>', checkkey) 
+    #creating list box 
+    lb = Listbox(customer_input_frame)
+    lb.pack()
+    lb.pack_forget()
+    update(l) 
+    lb.bind("<KeyRelease-Return>", selectcustomer)
+    lb.bind("<ButtonRelease-1>", selectcustomer)
+    lb.bind("<Double-Button-1>", selectcustomer)
 root = Tk() 
 root.title("Brightness Assay")
 
@@ -99,42 +143,20 @@ tabControl.pack(expand = 1, fill ="both")
 
 #tab 1#
 ttk.Label(tab1,  text ="Form Code: ").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0))
-ttk.Label(tab1,  text ="VAR - Clicked Form Code").grid(column = 1,  row = 0, pady = (10,0))
+ttk.Label(tab1,  text ="Clicked Form Code").grid(column = 1,  row = 0, pady = (10,0))
 ttk.Label(tab1,  text ="Customer: ").grid(column = 2,  row = 0, padx = (15,0), pady = (10,0))
+ttk.Label(tab1,  text ="Kedai Emas Sangat Panjang").grid(column = 3,  row = 0, padx = (5,0), pady = 10)
 ttk.Label(tab1,  text ="Date: ").grid(column = 4,  row = 0, padx = (15,0), pady = (10,0))
-ttk.Label(tab1,  text ="VAR - Clicked date").grid(column = 5,  row = 0, pady = (10,0))
+ttk.Label(tab1,  text ="Clicked date").grid(column = 5,  row = 0, pady = (10,0))
 ttk.Label(tab1,  text ="Item Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-item_code = StringVar()
-item_code_entry = Entry(tab1, textvariable = item_code)
-item_code_entry.grid(column = 1,  row = 1)
-item_code_entry.bind('<Return>', focusweight)
+ttk.Label(tab1,  text ="Clicked item code").grid(column = 1,  row = 1, padx = (5,0), pady = (10,0))
 ttk.Label(tab1,  text ="Sample Weight (g): ").grid(column = 2,  row = 1, padx = (5,0), pady = 10)
-sample_weight = StringVar()
-sample_weight_entry = Entry(tab1, textvariable = sample_weight)
-sample_weight_entry.grid(column = 3,  row = 1)
-sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
-
-# Combobox creation
-# create a frame 
-customer_input_frame = ttk.Frame(tab1)
-customer_input_frame.grid(column =3,  row = 0)
-# If customer not in list, pop up add new customer window
-customer = StringVar() 
-customer_entry = Entry(customer_input_frame, textvariable=customer) 
-customer_entry.pack() 
-customer_entry.bind('<KeyRelease>', checkkey) 
-#creating list box 
-lb = Listbox(customer_input_frame)
-lb.pack()
-lb.pack_forget()
-update(l) 
-lb.bind("<KeyRelease-Return>", selectcustomer)
-lb.bind("<ButtonRelease-1>", selectcustomer)
-lb.bind("<Double-Button-1>", selectcustomer)
+ttk.Label(tab1,  text ="0.0001").grid(column = 3,  row = 1, padx = (5,0), pady = 10)
 
 # tab1 button #
-new_record = Button(tab1, text = 'NEW', command = root.destroy)
+new_record = Button(tab1, text = 'NEW')
 new_record.grid(column = 6,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
+new_record.bind("<Button>", lambda e: NewFormCode(root)) 
 delete_record = Button(tab1, text = 'DELETE', command = root.destroy)
 delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
 edit_record = Button(tab1, text = 'EDIT', command = root.destroy)
