@@ -1,5 +1,9 @@
 from tkinter import *  
 from tkinter import ttk
+from tkcalendar import Calendar, DateEntry
+from ttkthemes import ThemedTk
+import datetime
+today = datetime.date.today()
 
 def donothing():
   filewin = Toplevel(root)
@@ -91,7 +95,7 @@ class NewFormCode(Toplevel):
     item_code_entry.grid(column = 1,  row = 4)
     item_code_entry.bind('<Return>', focusweight)
     Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
-    sample_weight = StringVar()
+    sample_weight = DoubleVar()
     sample_weight_entry = Entry(self, textvariable = sample_weight)
     sample_weight_entry.grid(column = 1,  row = 5)
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
@@ -162,7 +166,7 @@ class EditRecord(Toplevel):
     item_code_entry.grid(column = 1,  row = 4)
     item_code_entry.bind('<Return>', focusweight)
     Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
-    sample_weight = StringVar()
+    sample_weight = DoubleVar()
     sample_weight_entry = Entry(self, textvariable = sample_weight)
     sample_weight_entry.grid(column = 1,  row = 5)
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
@@ -214,12 +218,12 @@ class AddToFormcode(Toplevel):
     item_code_entry.grid(column = 1,  row = 4)
     item_code_entry.bind('<Return>', focusweight)
     Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
-    sample_weight = StringVar()
+    sample_weight = DoubleVar()
     sample_weight_entry = Entry(self, textvariable = sample_weight)
     sample_weight_entry.grid(column = 1,  row = 5)
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
 
-root = Tk() 
+root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
 
 # Menu #
@@ -243,7 +247,7 @@ tabControl.add(tab1, text ='Main')
 tabControl.add(tab2, text ='First Weight')
 tabControl.add(tab3, text ='Last Weight') 
 tabControl.add(tab4, text ='Sample Return') 
-tabControl.add(tab5, text ='Report') 
+tabControl.add(tab5, text ='History') 
 tabControl.pack(expand = 1, fill ="both") 
 
 #tab 1#
@@ -365,7 +369,7 @@ right_table.insert("", 'end', text ="L11", values =("Mohit", "M", "16"))
 right_table.insert("", 'end', text ="L12", values =("Vivek", "M", "22")) 
 right_table.insert("", 'end', text ="L13", values =("Suman", "F", "30")) 
 
-# tab 2 #
+# tab 2 first weight #
 # frame for info
 fw_info_frame = ttk.Frame(tab2)
 fw_info_frame.grid(column = 0,  row = 0)
@@ -417,7 +421,7 @@ fw_table.heading("4", text ="B")
 fw_table.heading("5", text ="%")
 
 
-# tab 3 #
+# tab 3 - first weight #
 # frame for info
 lw_info_frame = ttk.Frame(tab3)
 lw_info_frame.grid(column = 0,  row = 0)
@@ -458,11 +462,12 @@ ttk.Label(lw_entry_frame,  text ="/2").grid(column = 6,  row = 1, padx = 5, rows
 avg_result = IntVar()
 avg_result_entry = Entry(lw_entry_frame, textvariable = avg_result, state = 'disabled')
 avg_result_entry.grid(column = 7,  row = 1, rowspan = 2)
-ttk.Label(lw_entry_frame,  text ="Loss").grid(column = 8,  row = 0, padx = 5)
+ttk.Label(lw_entry_frame,  text ="-").grid(column = 8,  row = 1, padx = 5, rowspan = 2)
+ttk.Label(lw_entry_frame,  text ="Loss").grid(column = 9,  row = 0, padx = 5)
 loss = IntVar()
 loss_label = Label(lw_entry_frame, textvariable = loss)
-loss_label.grid(column = 8,  row = 1, rowspan = 2)
-ttk.Label(lw_entry_frame,  text ="=").grid(column = 9,  row = 1, rowspan = 2, padx = 5)
+loss_label.grid(column = 9,  row = 1, rowspan = 2)
+ttk.Label(lw_entry_frame,  text ="=").grid(column = 10,  row = 1, rowspan = 2, padx = 5)
 ttk.Label(lw_entry_frame,  text ="Result").grid(column = 11,  row = 0)
 result = IntVar()
 result_entry = Entry(lw_entry_frame, textvariable = result, state = 'disabled')
@@ -501,6 +506,156 @@ lw_table.heading("5", text ="Last A")
 lw_table.heading("6", text ="Last B")
 lw_table.heading("7", text ="%")
 lw_table.heading("8", text ="Result")
+
+# tab 4 - sample return#
+# frame for info
+sr_info_frame = ttk.Frame(tab4)
+sr_info_frame.grid(column = 0,  row = 0)
+ttk.Label(sr_info_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="Kedai Emas Sangat Panjang").grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="Item Code").grid(column = 1,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="Clicked Item Code").grid(column = 1,  row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="Sample Weight (g)").grid(column = 2,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="1.36").grid(column = 2,  row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  text ="Sample Return (g)").grid(column = 3,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+sr = DoubleVar()
+sr_entry = Entry(sr_info_frame, textvariable = sr)
+sr_entry.grid(column = 3,  row = 1)
+# Sample Return Table
+sr_table_frame = ttk.Frame(tab4)
+sr_table_frame.grid(column = 0,  row = 1, columnspan = 3, pady = 20)
+# Constructing vertical scrollbar 
+sr_table_scroll = ttk.Scrollbar(sr_table_frame, orient ="vertical") 
+sr_table_scroll.pack(side ='right', fill='y')
+# sr table # 
+sr_table = ttk.Treeview(sr_table_frame, selectmode ='browse', height = 20, yscrollcommand = sr_table_scroll.set, columns = ("1", "2", "3", "4", "5", "6"), show = 'headings') 
+sr_table.pack(side ='left')
+# Configuring scrollbar 
+sr_table_scroll.configure(command = sr_table.yview) 
+# Assigning the width and anchor to the respective columns 
+sr_table.column("1", width = 100, anchor ='c') 
+sr_table.column("2", width = 100, anchor ='c') 
+sr_table.column("3", width = 100, anchor ='c') 
+sr_table.column("4", width = 100, anchor ='c') 
+sr_table.column("5", width = 100, anchor ='c') 
+sr_table.column("6", width = 100, anchor ='c') 
+# Assigning the heading names to the respective columns 
+sr_table.heading("1", text ="Customer") 
+sr_table.heading("2", text ="Form Code")
+sr_table.heading("3", text ="Item Code") 
+sr_table.heading("4", text ="Result")
+sr_table.heading("5", text ="Sample Weight")
+sr_table.heading("6", text ="Sample Return")
+
+# tab 5 - search history
+# frame for info
+filter_frame = ttk.Frame(tab5)
+filter_frame.grid(column = 0,  row = 0, sticky = N)
+ttk.Label(filter_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+# Function for checking the key pressed and updating the listbox 
+def checkkeytab5(event): 
+  if event.keysym=='Down':
+    lb.focus_set()
+    lb.select_set(0) #This only sets focus on the first item.
+    lb.event_generate("<<ListboxSelect>>")
+  elif event.keysym=='Return':
+    item_code_entry.focus_set()
+  else:
+    value = event.widget.get() 
+    print(value)     
+    # get data from l 
+    if value == '': 
+        data = l
+        updatetab5(data)
+        lb.pack_forget()
+    else: 
+        data = [] 
+        for item in l: 
+            if value.lower() in item.lower(): 
+                data.append(item)
+                updatetab5(data)
+                lb.pack()
+def updatetab5(data): 
+  # clear previous data 
+  lb.delete(0, 'end') 
+  # put new data 
+  for item in data: 
+      lb.insert('end', item) 
+def selectcustomertab5(event):
+  selection = event.widget.curselection()
+  lb.pack_forget()
+  if selection:
+      index = selection[0]
+      customer.set(event.widget.get(index))
+      customer_entry.focus_set()
+# Driver code 
+l = ['C','C++','Java', 
+    'Python','Perl', 
+    'PHP','ASP','JS',
+    "apple", "banana", "cherry", 
+    "orange", "kiwi", "melon", "mango",
+    "Rice", "Chickpeas", "Pulses", "bread", "meat",
+    "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
+    "Chicken Pie", "Apple Pie", "Pudding" ]
+# Combobox creation
+# create a frame 
+customer_input_frame = Frame(filter_frame)
+customer_input_frame.grid(column = 0,  row = 1)
+# If customer not in list, pop up add new customer fw_pct_frame
+customer = StringVar() 
+customer_entry = Entry(customer_input_frame, textvariable=customer) 
+customer_entry.pack() 
+customer_entry.bind('<KeyRelease>', checkkeytab5) 
+#creating list box 
+lb = Listbox(customer_input_frame)
+lb.pack()
+lb.pack_forget()
+updatetab5(l) 
+lb.bind("<KeyRelease-Return>", selectcustomertab5)
+lb.bind("<ButtonRelease-1>", selectcustomertab5)
+lb.bind("<Double-Button-1>", selectcustomertab5)
+ttk.Label(filter_frame,  text ="Item Code").grid(column = 0,  row = 2, padx = (5,0), pady = (10,0), sticky=W)
+search_code = StringVar() 
+search_code_entry = Entry(filter_frame, textvariable=search_code).grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
+# frame for date
+date_frame = Frame(filter_frame)
+date_frame.grid(column = 0,  row = 4)
+def print_sel():
+    print(start_cal.get_date())
+    print(end_cal.get_date())
+ttk.Label(date_frame, text='Start date').pack()
+start_cal = DateEntry(date_frame, width=12, background='darkblue', foreground='white', date_pattern = 'dd-mm-y', maxdate= today, showothermonthdays = False, showweeknumbers = False, weekendbackground = '#DCDCDC')
+start_cal.pack(padx=5, pady=5)
+ttk.Label(date_frame, text='End date').pack()
+end_cal = DateEntry(date_frame, width=12, background='darkblue', foreground='white', date_pattern = 'dd-mm-y', maxdate= today, showothermonthdays = False, showweeknumbers = False, weekendbackground = '#DCDCDC')
+end_cal.pack(padx=5, pady=5)
+ttk.Button(filter_frame, text="Search", command=print_sel).grid(column = 0,  row = 5)
+# Search History Table
+sh_table_frame = ttk.Frame(tab5)
+sh_table_frame.grid(column = 1,  row = 0, pady = 20)
+# Constructing vertical scrollbar 
+sh_table_scroll = ttk.Scrollbar(sh_table_frame, orient ="vertical") 
+sh_table_scroll.pack(side ='right', fill='y')
+# sh table # 
+sh_table = ttk.Treeview(sh_table_frame, selectmode ='browse', height = 20, yscrollcommand = sh_table_scroll.set, columns = ("1", "2", "3", "4", "5", "6"), show = 'headings') 
+sh_table.pack(side ='left')
+# Configuring scrollbar 
+sh_table_scroll.configure(command = sh_table.yview) 
+# Assigning the width and anchor to the respective columns 
+sh_table.column("1", width = 100, anchor ='c') 
+sh_table.column("2", width = 100, anchor ='c') 
+sh_table.column("3", width = 100, anchor ='c') 
+sh_table.column("4", width = 100, anchor ='c') 
+sh_table.column("5", width = 100, anchor ='c') 
+sh_table.column("6", width = 100, anchor ='c') 
+# Assigning the heading names to the respective columns 
+sh_table.heading("1", text ="Customer") 
+sh_table.heading("2", text ="Form Code")
+sh_table.heading("3", text ="Item Code") 
+sh_table.heading("4", text ="Result")
+sh_table.heading("5", text ="Sample Weight")
+sh_table.heading("6", text ="Sample Return")
+
 
 root.config(menu=menubar)
 root.mainloop()  
