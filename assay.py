@@ -3,11 +3,14 @@ from tkinter import ttk
 from tkcalendar import Calendar, DateEntry
 from ttkthemes import ThemedTk
 import datetime
+import mysql.connector
+from decouple import config
+
 today = datetime.date.today()
 
-def donothing():
-  filewin = Toplevel(root)
-  button = Button(filewin, text="Do nothing button")
+def printersetting():
+  printersetting = Toplevel(root)
+  button = Button(printersetting, text="CL")
   button.pack()
 
 class NewFormCode(Toplevel): 
@@ -226,13 +229,21 @@ class AddToFormcode(Toplevel):
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
 
+assaydb = mysql.connector.connect(
+          host = config('MYSQLHOST'),
+          user = config('MYSQLUSER'),
+          passwd = config('MYSQLPW'),
+        )
+
+print(assaydb)
+
 # Menu #
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
-filemenu.add_command(label="Setting", command=donothing)
-
+menubar.add_cascade(label="Menu", menu=filemenu)
+filemenu.add_command(label="Printer Setting", command=printersetting)
+filemenu.add_separator()
 filemenu.add_command(label="Exit", command=root.quit)
-menubar.add_cascade(label="File", menu=filemenu)
 
 # Tab #
 tabControl = ttk.Notebook(root) 
@@ -242,12 +253,14 @@ tab2 = ttk.Frame(tabControl)
 tab3 = ttk.Frame(tabControl) 
 tab4 = ttk.Frame(tabControl) 
 tab5 = ttk.Frame(tabControl) 
+tab6 = ttk.Frame(tabControl) 
   
 tabControl.add(tab1, text ='Main') 
 tabControl.add(tab2, text ='First Weight')
 tabControl.add(tab3, text ='Last Weight') 
 tabControl.add(tab4, text ='Sample Return') 
 tabControl.add(tab5, text ='History') 
+tabControl.add(tab6, text ='Customer') 
 tabControl.pack(expand = 1, fill ="both") 
 
 #tab 1#
@@ -263,15 +276,15 @@ ttk.Label(tab1,  text ="Sample Weight (g): ").grid(column = 2,  row = 1, padx = 
 ttk.Label(tab1,  text ="0.0001").grid(column = 3,  row = 1, padx = (5,0), pady = 10)
 
 # tab1 button #
-new_record = Button(tab1, text = 'NEW')
+new_record = ttk.Button(tab1, text = 'NEW')
 new_record.grid(column = 6,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
 new_record.bind("<Button>", lambda e: NewFormCode(root)) 
-delete_record = Button(tab1, text = 'DELETE')
+delete_record = ttk.Button(tab1, text = 'DELETE')
 delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
-edit_record = Button(tab1, text = 'EDIT')
+edit_record = ttk.Button(tab1, text = 'EDIT')
 edit_record.grid(column = 8,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
 edit_record.bind("<Button>", lambda e: EditRecord(root)) 
-add_to_formcode = Button(tab1, text = 'ADD')
+add_to_formcode = ttk.Button(tab1, text = 'ADD')
 add_to_formcode.grid(column = 9,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
 add_to_formcode.bind("<Button>", lambda e: AddToFormcode(root)) 
 
@@ -395,7 +408,7 @@ pct_entry = ttk.Combobox(fw_pct_frame, width = 10, textvariable = silver_pct, va
 pct_entry.grid(column = 0, row = 1) 
 pct_entry.current()
 #edit button
-edit_fw = Button(tab2, text = 'EDIT')
+edit_fw = ttk.Button(tab2, text = 'EDIT')
 edit_fw.grid(column = 3,  row = 0, padx = 10, ipadx = 10, ipady = 10, rowspan = 2)
 fw_table_frame = ttk.Frame(tab2)
 fw_table_frame.grid(column = 0,  row = 2, columnspan = 4)
@@ -475,7 +488,7 @@ result_entry.grid(column = 11,  row = 1, rowspan = 2)
 #edit button
 lw_edit_frame = ttk.Frame(tab3)
 lw_edit_frame.grid(column = 2,  row = 0)
-edit_lw = Button(lw_edit_frame, text = 'EDIT')
+edit_lw = ttk.Button(lw_edit_frame, text = 'EDIT')
 edit_lw.grid(column = 0,  row = 0, padx = 10, ipadx = 10, ipady = 10, rowspan = 2)
 # Last Weight Table
 lw_table_frame = ttk.Frame(tab3)
@@ -657,5 +670,97 @@ sh_table.heading("5", text ="Sample Weight")
 sh_table.heading("6", text ="Sample Return")
 
 
+# tab 6 - customer list
+# frame for info
+customer_filter_frame = ttk.Frame(tab6)
+customer_filter_frame.grid(column = 0,  row = 0, sticky = N)
+ttk.Button(customer_filter_frame, text="NEW", command=print_sel).grid(column = 0,  row = 0)
+ttk.Button(customer_filter_frame, text="EDIT", command=print_sel).grid(column = 0,  row = 1)
+ttk.Button(customer_filter_frame, text="DELETE", command=print_sel).grid(column = 0,  row = 2)
+ttk.Label(customer_filter_frame,  text ="Customer").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
+# Function for checking the key pressed and updating the listbox 
+def checkkeytab6(event): 
+  if event.keysym=='Down':
+    lb.focus_set()
+    lb.select_set(0) #This only sets focus on the first item.
+    lb.event_generate("<<ListboxSelect>>")
+  elif event.keysym=='Return':
+    item_code_entry.focus_set()
+  else:
+    value = event.widget.get() 
+    print(value)     
+    # get data from l 
+    if value == '': 
+        data = l
+        updatetab6(data)
+        lb.pack_forget()
+    else: 
+        data = [] 
+        for item in l: 
+            if value.lower() in item.lower(): 
+                data.append(item)
+                updatetab6(data)
+                lb.pack()
+def updatetab6(data): 
+  # clear previous data 
+  lb.delete(0, 'end') 
+  # put new data 
+  for item in data: 
+      lb.insert('end', item) 
+def selectcustomertab6(event):
+  selection = event.widget.curselection()
+  lb.pack_forget()
+  if selection:
+      index = selection[0]
+      customer.set(event.widget.get(index))
+      customer_entry.focus_set()
+# Driver code 
+l = ['C','C++','Java', 
+    'Python','Perl', 
+    'PHP','ASP','JS',
+    "apple", "banana", "cherry", 
+    "orange", "kiwi", "melon", "mango",
+    "Rice", "Chickpeas", "Pulses", "bread", "meat",
+    "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
+    "Chicken Pie", "Apple Pie", "Pudding" ]
+# Combobox creation
+# create a frame 
+customer_input_frame = Frame(customer_filter_frame)
+customer_input_frame.grid(column = 0,  row = 4)
+# If customer not in list, pop up add new customer fw_pct_frame
+customer = StringVar() 
+customer_entry = Entry(customer_input_frame, textvariable=customer) 
+customer_entry.pack() 
+customer_entry.bind('<KeyRelease>', checkkeytab6) 
+#creating list box 
+lb = Listbox(customer_input_frame)
+lb.pack()
+lb.pack_forget()
+updatetab6(l) 
+lb.bind("<KeyRelease-Return>", selectcustomertab6)
+lb.bind("<ButtonRelease-1>", selectcustomertab6)
+lb.bind("<Double-Button-1>", selectcustomertab6)
+ttk.Button(customer_filter_frame, text="Search", command=print_sel).grid(column = 0,  row = 5)
+# Customer Table
+cl_table_frame = ttk.Frame(tab6)
+cl_table_frame.grid(column = 1,  row = 0, pady = 20)
+# Constructing vertical scrollbar 
+cl_table_scroll = ttk.Scrollbar(cl_table_frame, orient ="vertical") 
+cl_table_scroll.pack(side ='right', fill='y')
+# cl table # 
+cl_table = ttk.Treeview(cl_table_frame, selectmode ='browse', height = 20, yscrollcommand = cl_table_scroll.set, columns = ("1", "2", "3", "4"), show = 'headings') 
+cl_table.pack(side ='left')
+# Configuring scrollbar 
+cl_table_scroll.configure(command = cl_table.yview) 
+# Assigning the width and anchor to the respective columns 
+cl_table.column("1", width = 100, anchor ='c') 
+cl_table.column("2", width = 100, anchor ='c') 
+cl_table.column("3", width = 100, anchor ='c') 
+cl_table.column("4", width = 100, anchor ='c') 
+# Assigning the heading names to the respective columns 
+cl_table.heading("1", text ="Customer") 
+cl_table.heading("2", text ="Phone")
+cl_table.heading("3", text ="Email") 
+cl_table.heading("4", text ="Fax")
 root.config(menu=menubar)
 root.mainloop()  
