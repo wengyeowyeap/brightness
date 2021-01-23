@@ -10,8 +10,51 @@ today = datetime.date.today()
 
 def printersetting():
   printersetting = Toplevel(root)
+  printersetting.grab_set()
   button = Button(printersetting, text="CL")
   button.pack()
+
+def assaysetting():
+  assaysetting = Toplevel(root)
+  assaysetting.grab_set()
+  # Tab #
+  tabControl = ttk.Notebook(assaysetting) 
+  tab1 = ttk.Frame(tabControl) 
+  tab2 = ttk.Frame(tabControl) 
+  tab3 = ttk.Frame(tabControl) 
+  tab4 = ttk.Frame(tabControl) 
+  tabControl.add(tab1, text ='User') 
+  tabControl.add(tab2, text ='Company Info')
+  tabControl.add(tab3, text ='Silver %') 
+  tabControl.add(tab4, text ='Loss') 
+  tabControl.pack(expand = 1, fill ="both")
+
+  ttk.Label(tab2,  text ="Company Name").grid(column = 0,  row = 0, padx = 10)
+  company_name = StringVar()
+  company_name_entry = Entry(tab2, textvariable = company_name).grid(column = 1,  row = 0)
+  ttk.Label(tab2,  text ="Address").grid(column = 0,  row = 1, padx = 10)
+  address = StringVar()
+  address_entry = Entry(tab2, textvariable = address).grid(column = 1,  row = 1)
+  ttk.Label(tab2,  text ="Contact").grid(column = 0,  row = 2, padx = 10)
+  contact = StringVar()
+  contact_entry = Entry(tab2, textvariable = contact).grid(column = 1,  row = 2)
+  ttk.Label(tab2,  text ="Terms & Condition").grid(column = 0,  row = 3, padx = 10)
+  tandc1 = StringVar()
+  tandc1_entry = Entry(tab2, textvariable = tandc1).grid(column = 1,  row = 3)
+  tandc2 = StringVar()
+  tandc2_entry = Entry(tab2, textvariable = tandc2).grid(column = 1,  row = 4)
+  tandc3 = StringVar()
+  tandc3_entry = Entry(tab2, textvariable = tandc3).grid(column = 1,  row = 5)
+
+  ttk.Label(tab2,  text ="Email").grid(column = 0,  row = 6, padx = 10)
+  email = StringVar()
+  email_entry = Entry(tab2, textvariable = email).grid(column = 1,  row = 6)
+  ttk.Label(tab2,  text ="Password").grid(column = 0,  row = 7, padx = 10)
+  password = StringVar()
+  password_entry = Entry(tab2, textvariable = password, show='*').grid(column = 1,  row = 7)
+
+  submit_company_profile = ttk.Button(tab2, text = 'Submit')
+  submit_company_profile.grid(column = 0,  row = 8, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 2) 
 
 class NewFormCode(Toplevel): 
   def __init__(self, master = None): 
@@ -242,19 +285,18 @@ menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
 menubar.add_cascade(label="Menu", menu=filemenu)
 filemenu.add_command(label="Printer Setting", command=printersetting)
+filemenu.add_command(label="Assay Setting", command=assaysetting)
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=root.quit)
 
 # Tab #
 tabControl = ttk.Notebook(root) 
-  
 tab1 = ttk.Frame(tabControl) 
 tab2 = ttk.Frame(tabControl) 
 tab3 = ttk.Frame(tabControl) 
 tab4 = ttk.Frame(tabControl) 
 tab5 = ttk.Frame(tabControl) 
 tab6 = ttk.Frame(tabControl) 
-  
 tabControl.add(tab1, text ='Main') 
 tabControl.add(tab2, text ='First Weight')
 tabControl.add(tab3, text ='Last Weight') 
