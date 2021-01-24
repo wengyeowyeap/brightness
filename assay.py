@@ -25,10 +25,27 @@ def assaysetting():
   tab4 = ttk.Frame(tabControl) 
   tabControl.add(tab1, text ='User') 
   tabControl.add(tab2, text ='Company Info')
-  tabControl.add(tab3, text ='Silver %') 
-  tabControl.add(tab4, text ='Loss') 
+  tabControl.add(tab3, text ='Loss') 
   tabControl.pack(expand = 1, fill ="both")
 
+  #tab 1 - User
+  ttk.Label(tab1,  text ="Username").grid(column = 0,  row = 0, padx = 10)
+  username = StringVar()
+  ttk.Label(tab1,  textvariable = username).grid(column = 1,  row = 0, padx = 10)
+  ttk.Label(tab1,  text ="Change Password").grid(column = 0,  row = 1, padx = 10)
+  ttk.Label(tab1,  text ="Current Password").grid(column = 0,  row = 2, padx = 10)
+  current_password = StringVar()
+  current_password_entry = Entry(tab1, textvariable = current_password, show='*').grid(column = 1,  row = 2)
+  ttk.Label(tab1,  text ="New Password").grid(column = 0,  row = 3, padx = 10)
+  new_password = StringVar()
+  new_password_entry = Entry(tab1, textvariable = new_password, show='*').grid(column = 1,  row = 3)
+  ttk.Label(tab1,  text ="Confirm New Password").grid(column = 0,  row = 4, padx = 10)
+  confirm_new_password = StringVar()
+  confirm_new_password_entry = Entry(tab1, textvariable = confirm_new_password, show='*').grid(column = 1,  row = 4)
+  submit_password = ttk.Button(tab1, text = 'Submit')
+  submit_password.grid(column = 0,  row = 5, ipadx = 10, ipady = 10, columnspan = 2)  
+
+  #tab 2 - Company Info
   ttk.Label(tab2,  text ="Company Name").grid(column = 0,  row = 0, padx = 10)
   company_name = StringVar()
   company_name_entry = Entry(tab2, textvariable = company_name).grid(column = 1,  row = 0)
@@ -49,12 +66,51 @@ def assaysetting():
   ttk.Label(tab2,  text ="Email").grid(column = 0,  row = 6, padx = 10)
   email = StringVar()
   email_entry = Entry(tab2, textvariable = email).grid(column = 1,  row = 6)
-  ttk.Label(tab2,  text ="Password").grid(column = 0,  row = 7, padx = 10)
+  ttk.Label(tab2,  text ="Email Password").grid(column = 0,  row = 7, padx = 10)
   password = StringVar()
   password_entry = Entry(tab2, textvariable = password, show='*').grid(column = 1,  row = 7)
 
   submit_company_profile = ttk.Button(tab2, text = 'Submit')
   submit_company_profile.grid(column = 0,  row = 8, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 2) 
+
+  #tab3 - Loss
+  # create frame for input (add/edit)
+  loss_input_frame = Frame(tab3)
+  loss_input_frame.grid(column = 0,  row = 0)
+  low = StringVar()
+  low_entry = Entry(loss_input_frame, textvariable = low).grid(column = 0,  row = 0)
+  ttk.Label(loss_input_frame,  text ="≥ Result ≥").grid(column = 1,  row = 0, padx = 10)
+  high = StringVar()
+  high_entry = Entry(loss_input_frame, textvariable = high).grid(column = 2,  row = 0)
+  ttk.Label(loss_input_frame,  text ="Loss %").grid(column = 0,  row = 2, padx = 10)
+  contact = StringVar()
+  contact_entry = Entry(loss_input_frame, textvariable = contact).grid(column = 1,  row = 2, columnspan = 3)
+  new_loss = ttk.Button(loss_input_frame, text = 'NEW')
+  new_loss.grid(column = 0,  row = 3, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3) 
+  edit_loss = ttk.Button(loss_input_frame, text = 'EDIT')
+  edit_loss.grid(column = 0,  row = 4, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3) 
+  delete_loss = ttk.Button(loss_input_frame, text = 'DELETE')
+  delete_loss.grid(column = 0,  row = 5, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3)
+
+  # create frame for loss table
+  loss_table_frame = Frame(tab3)
+  loss_table_frame.grid(column = 1,  row = 0)
+  # Constructing vertical scrollbar 
+  loss_table_scroll = ttk.Scrollbar(loss_table_frame, orient ="vertical") 
+  loss_table_scroll.pack(side ='right', fill='y')
+  # loss table # 
+  loss_table = ttk.Treeview(loss_table_frame, selectmode ='browse', height = 20, yscrollcommand = loss_table_scroll.set, columns = ("1", "2", "3"), show = 'headings') 
+  loss_table.pack(side ='left')
+  # Configuring scrollbar 
+  loss_table_scroll.configure(command = loss_table.yview) 
+  # Assigning the width and anchor to the respective columns 
+  loss_table.column("1", width = 100, anchor ='c') 
+  loss_table.column("2", width = 100, anchor ='c') 
+  loss_table.column("3", width = 100, anchor ='c') 
+  # Assigning the heading names to the respective columns 
+  loss_table.heading("1", text ="Minimum") 
+  loss_table.heading("2", text ="Maximum") 
+  loss_table.heading("3", text ="Loss %")
 
 class NewFormCode(Toplevel): 
   def __init__(self, master = None): 
