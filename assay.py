@@ -129,9 +129,17 @@ class NewFormCode(Toplevel):
       if myresult:
         for x in myresult:
           formcode = x[17] + 1
-          print(formcode)
+          showformcode.set(formcode)
       else:
         formcode = 1
+
+    def nextformcode():
+      setformcode()
+      #clear boxes and refocus
+      item_code.set("") 
+      sample_weight.set("")
+      customer.set("")
+      customer_entry.focus_set()
 
     # Function for checking the key pressed and updating the listbox 
     def checkkey(event): 
@@ -204,17 +212,17 @@ class NewFormCode(Toplevel):
     if myresult:
       for x in myresult:
         cl.append(x[9])
+    
+    showformcode = StringVar()
     setformcode()    
     #New Formcode Button
-    new_record = Button(self, text = 'New Formcode', command = self.destroy)
-    new_record.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+    new_formcode = Button(self, text = 'New Formcode', command = nextformcode)
+    new_formcode.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
     #Close Button
     close_new_record = Button(self, text = 'Close', command = self.destroy)
     close_new_record.grid(column = 1,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
 
     Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    showformcode = StringVar()
-    showformcode.set(formcode)
     Label(self,  textvariable = showformcode).grid(column = 1,  row = 1, pady = (10,0))
     Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
     showdate = StringVar()
@@ -255,6 +263,31 @@ class NewRound(Toplevel):
     super().__init__(master = master) 
     self.title("New Formcode")
     self.geometry("280x450") 
+    self.grab_set()
+    def setformcode():
+      global formcode
+      mycursor = assaydb.cursor()
+      mycursor.execute("SELECT * FROM assayresult ORDER BY formcode DESC LIMIT 1")
+      myresult = mycursor.fetchall()
+      if myresult:
+        for x in myresult:
+          formcode = x[17] + 1
+          showformcode.set(formcode)
+      else:
+        formcode = 1
+    def nextformcode():
+      setformcode()
+      #clear boxes and refocus
+      item_code.set("") 
+      sample_weight.set("")
+      customer.set("")
+      customer_entry.focus_set()
+    def changecolor():
+      global colorset
+      if colorset == True:
+        colorset = False
+      else:
+        colorset = True
     # Function for checking the key pressed and updating the listbox 
     def checkkey(event): 
       if event.keysym=='Down':
@@ -268,17 +301,16 @@ class NewRound(Toplevel):
         print(value)     
         # get data from l 
         if value == '': 
-            data = l
+            data = cl
             update(data)
             lb.pack_forget()
         else: 
             data = [] 
-            for item in l: 
+            for item in cl: 
                 if value.lower() in item.lower(): 
                     data.append(item)
                     update(data)
                     lb.pack()
-      
     def update(data): 
       # clear previous data 
       lb.delete(0, 'end') 
@@ -286,7 +318,6 @@ class NewRound(Toplevel):
       # put new data 
       for item in data: 
           lb.insert('end', item) 
-
     def selectcustomer(event):
       selection = event.widget.curselection()
       lb.pack_forget()
@@ -294,41 +325,52 @@ class NewRound(Toplevel):
           index = selection[0]
           customer.set(event.widget.get(index))
           customer_entry.focus_set()
-
-    # Driver code 
-    l = ['C','C++','Java', 
-        'Python','Perl', 
-        'PHP','ASP','JS',
-        "apple", "banana", "cherry", 
-        "orange", "kiwi", "melon", "mango",
-        "Rice", "Chickpeas", "Pulses", "bread", "meat",
-        "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-        "Chicken Pie", "Apple Pie", "Pudding" ]
-
     def focusweight(event):
       sample_weight_entry.focus_set() 
-
     def submit(event): 
-      code=item_code_entry.get() 
+      code=item_code_entry.get()
       weight=sample_weight_entry.get()
-        
-      print("The code is : " + code) 
-      print("The weight is : " + weight) 
-        
+      customer=customer_entry.get()
+      print("The code is : " + code)
+      print("The weight is : " + weight)
+      print(customer)
+      # search customer id
+      sql = f"SELECT * FROM user WHERE name ='{customer}'"      
+      mycursor.execute(sql)
+      customerselected = mycursor.fetchone()
+      #insert record
+      sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+      val = (now, now, code, weight, colorset, customerselected[0], formcode)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      #clear boxes
       item_code.set("") 
-      sample_weight.set("") 
-
+      sample_weight.set("")
+      item_code_entry.focus_set()
+    # get customer from db
+    mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+    myresult = mycursor.fetchall()
+    cl = []
+    if myresult:
+      for x in myresult:
+        cl.append(x[9])
+    
+    showformcode = StringVar()
+    setformcode()
+    changecolor()
     #New Formcode Button
-    new_record = Button(self, text = 'New Formcode', command = self.destroy)
-    new_record.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+    new_formcode = Button(self, text = 'New Formcode', command = nextformcode)
+    new_formcode.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
     #Close Button
     close_new_record = Button(self, text = 'Close', command = self.destroy)
     close_new_record.grid(column = 1,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
 
     Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    Label(self,  text ="VAR - New Form Code").grid(column = 1,  row = 1, pady = (10,0))
+    Label(self,  textvariable = showformcode).grid(column = 1,  row = 1, pady = (10,0))
     Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
-    Label(self,  text ="VAR - Current date").grid(column = 1,  row = 2, pady = (10,0))
+    showdate = StringVar()
+    showdate.set(today.strftime("%d/%m/%Y"))
+    Label(self,  textvariable = showdate).grid(column = 1,  row = 2, pady = (10,0))
     Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
     item_code = StringVar()
     item_code_entry = Entry(self, textvariable = item_code)
@@ -354,7 +396,7 @@ class NewRound(Toplevel):
     lb = Listbox(customer_input_frame)
     lb.pack()
     lb.pack_forget()
-    update(l) 
+    update(cl) 
     lb.bind("<KeyRelease-Return>", selectcustomer)
     lb.bind("<ButtonRelease-1>", selectcustomer)
     lb.bind("<Double-Button-1>", selectcustomer)
@@ -528,7 +570,7 @@ new_record.grid(column = 6,  row = 0, padx = 10, pady = 10)
 new_record.bind("<Button>", lambda e: NewFormCode(root))
 new_round = ttk.Button(tab1, text = 'NEW ROUND')
 new_round.grid(column = 6,  row = 1, padx = 10, pady = 10)
-new_record.bind("<Button>", lambda e: NewFormCode(root))
+new_round.bind("<Button>", lambda e: NewRound(root))
 delete_record = ttk.Button(tab1, text = 'DELETE')
 delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10)
 edit_record = ttk.Button(tab1, text = 'EDIT')
