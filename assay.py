@@ -7,6 +7,9 @@ import mysql.connector
 from decouple import config
 
 today = datetime.date.today()
+now = datetime.datetime.now()
+colorset = True
+formcode = 0
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -113,6 +116,141 @@ def assaysetting():
   loss_table.heading("3", text ="Loss %")
 
 class NewFormCode(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("New Formcode")
+    self.geometry("280x450") 
+    self.grab_set()
+    def setformcode():
+      global formcode
+      mycursor = assaydb.cursor()
+      mycursor.execute("SELECT * FROM assayresult ORDER BY formcode DESC LIMIT 1")
+      myresult = mycursor.fetchall()
+      if myresult:
+        for x in myresult:
+          formcode = x[17] + 1
+          print(formcode)
+      else:
+        formcode = 1
+
+    # Function for checking the key pressed and updating the listbox 
+    def checkkey(event): 
+      if event.keysym=='Down':
+        lb.focus_set()
+        lb.select_set(0) #This only sets focus on the first item.
+        lb.event_generate("<<ListboxSelect>>")
+      elif event.keysym=='Return':
+        item_code_entry.focus_set()
+      else:
+        value = event.widget.get() 
+        print(value)     
+        # get data from l 
+        if value == '': 
+            data = cl
+            update(data)
+            lb.pack_forget()
+        else: 
+            data = [] 
+            for item in cl: 
+                if value.lower() in item.lower(): 
+                    data.append(item)
+                    update(data)
+                    lb.pack()
+      
+    def update(data): 
+      # clear previous data 
+      lb.delete(0, 'end') 
+      
+      # put new data 
+      for item in data: 
+          lb.insert('end', item) 
+
+    def selectcustomer(event):
+      selection = event.widget.curselection()
+      lb.pack_forget()
+      if selection:
+          index = selection[0]
+          customer.set(event.widget.get(index))
+          customer_entry.focus_set()
+
+    def focusweight(event):
+      sample_weight_entry.focus_set() 
+
+    def submit(event): 
+      code=item_code_entry.get()
+      weight=sample_weight_entry.get()
+      customer=customer_entry.get()
+      print("The code is : " + code)
+      print("The weight is : " + weight)
+      print(customer)
+      # search customer id
+      sql = f"SELECT * FROM user WHERE name ='{customer}'"      
+      mycursor.execute(sql)
+      customerselected = mycursor.fetchone()
+      #insert record
+      sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+      val = (now, now, code, weight, colorset, customerselected[0], formcode)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      #clear boxes
+      item_code.set("") 
+      sample_weight.set("")
+      item_code_entry.focus_set()
+
+    # get customer from db
+    mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+    myresult = mycursor.fetchall()
+    cl = []
+    if myresult:
+      for x in myresult:
+        cl.append(x[9])
+    setformcode()    
+    #New Formcode Button
+    new_record = Button(self, text = 'New Formcode', command = self.destroy)
+    new_record.grid(column = 0,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+    #Close Button
+    close_new_record = Button(self, text = 'Close', command = self.destroy)
+    close_new_record.grid(column = 1,  row = 0, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+
+    Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+    showformcode = StringVar()
+    showformcode.set(formcode)
+    Label(self,  textvariable = showformcode).grid(column = 1,  row = 1, pady = (10,0))
+    Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+    showdate = StringVar()
+    showdate.set(today.strftime("%d/%m/%Y"))
+    Label(self,  textvariable = showdate).grid(column = 1,  row = 2, pady = (10,0))
+    Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+    item_code = StringVar()
+    item_code_entry = Entry(self, textvariable = item_code)
+    item_code_entry.grid(column = 1,  row = 4)
+    item_code_entry.bind('<Return>', focusweight)
+    Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+    sample_weight = DoubleVar()
+    sample_weight_entry = Entry(self, textvariable = sample_weight)
+    sample_weight_entry.grid(column = 1,  row = 5)
+    sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
+
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+    # Combobox creation
+    # create a frame 
+    customer_input_frame = Frame(self)
+    customer_input_frame.grid(column = 1,  row = 3, pady = (10,10))
+    # If customer not in list, pop up add new customer fw_pct_frame
+    customer = StringVar() 
+    customer_entry = Entry(customer_input_frame, textvariable=customer) 
+    customer_entry.pack() 
+    customer_entry.bind('<KeyRelease>', checkkey) 
+    #creating list box 
+    lb = Listbox(customer_input_frame)
+    lb.pack()
+    lb.pack_forget()
+    update(cl) 
+    lb.bind("<KeyRelease-Return>", selectcustomer)
+    lb.bind("<ButtonRelease-1>", selectcustomer)
+    lb.bind("<Double-Button-1>", selectcustomer)
+
+class NewRound(Toplevel): 
   def __init__(self, master = None): 
     super().__init__(master = master) 
     self.title("New Formcode")
@@ -325,6 +463,15 @@ class AddToFormcode(Toplevel):
     sample_weight_entry.grid(column = 1,  row = 5)
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
 
+def selectmaintable():
+  mycursor.execute("SELECT * FROM assayresult")
+
+  dbresult = mycursor.fetchall()
+
+  for x in dbresult:
+    print(x)
+
+
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
 
@@ -332,10 +479,12 @@ assaydb = mysql.connector.connect(
           host = config('MYSQLHOST'),
           user = config('MYSQLUSER'),
           passwd = config('MYSQLPW'),
+          database="assay"
         )
 
 print(assaydb)
-
+mycursor = assaydb.cursor()
+# selectmaintable()
 # Menu #
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
@@ -375,15 +524,18 @@ ttk.Label(tab1,  text ="0.0001").grid(column = 3,  row = 1, padx = (5,0), pady =
 
 # tab1 button #
 new_record = ttk.Button(tab1, text = 'NEW')
-new_record.grid(column = 6,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
-new_record.bind("<Button>", lambda e: NewFormCode(root)) 
+new_record.grid(column = 6,  row = 0, padx = 10, pady = 10)
+new_record.bind("<Button>", lambda e: NewFormCode(root))
+new_round = ttk.Button(tab1, text = 'NEW ROUND')
+new_round.grid(column = 6,  row = 1, padx = 10, pady = 10)
+new_record.bind("<Button>", lambda e: NewFormCode(root))
 delete_record = ttk.Button(tab1, text = 'DELETE')
-delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
+delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10)
 edit_record = ttk.Button(tab1, text = 'EDIT')
-edit_record.grid(column = 8,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
+edit_record.grid(column = 8,  row = 0, padx = 10, pady = 10)
 edit_record.bind("<Button>", lambda e: EditRecord(root)) 
 add_to_formcode = ttk.Button(tab1, text = 'ADD')
-add_to_formcode.grid(column = 9,  row = 0, padx = 10, pady = 10, ipadx = 10, ipady = 10)
+add_to_formcode.grid(column = 9,  row = 0, padx = 10, pady = 10)
 add_to_formcode.bind("<Button>", lambda e: AddToFormcode(root)) 
 
 # create a frame in tab 1 for left table
