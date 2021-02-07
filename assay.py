@@ -518,7 +518,7 @@ class AddToFormcode(Toplevel):
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
 
 def loadmainlefttable():
-  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
+  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
   dbresult = mycursor.fetchall()
   loadlefttable = []
   for x in dbresult:
@@ -547,7 +547,7 @@ def loadmainlefttable():
   left_table.tag_configure('false', background='plum')
 
 def loadmainrighttable():
-  mycursor.execute("SELECT formcode, itemcode, sampleweight, samplereturn, finalresult, color FROM assayresult ORDER BY formcode")
+  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.finalresult AS finalresult, assayresult.color AS color, assayresult.created AS created, user.name AS customer FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
   dbresult = mycursor.fetchall()
   loadrighttable = []
   for x in dbresult:
@@ -564,6 +564,26 @@ def loadmainrighttable():
       right_table.insert("", 'end', text ="L1", values =record, tags = ("false"))
   right_table.tag_configure('true', background='lightcyan')
   right_table.tag_configure('false', background='plum')
+
+def displaymainfromleft(a):
+  curItem = left_table.focus()
+  print(left_table.item(curItem).get('values'))
+  selected = left_table.item(curItem).get('values')
+  selectedfc.set(selected[0])
+  selectedc.set(selected[3])
+  selectedd.set(selected[2])
+  selectedic.set(selected[5])
+  selectedsw.set(selected[6])
+
+def displaymainfromright(a):
+  curItem = right_table.focus()
+  print(right_table.item(curItem).get('values'))
+  selected = right_table.item(curItem).get('values')
+  selectedfc.set(selected[0])
+  selectedc.set(selected[7])
+  selectedd.set(selected[6])
+  selectedic.set(selected[1])
+  selectedsw.set(selected[2])
 
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
@@ -604,15 +624,20 @@ tabControl.pack(expand = 1, fill ="both")
 
 #tab 1#
 ttk.Label(tab1,  text ="Form Code: ").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0))
-ttk.Label(tab1,  text ="Clicked Form Code").grid(column = 1,  row = 0, pady = (10,0))
+selectedfc = StringVar()
+ttk.Label(tab1,  textvariable = selectedfc).grid(column = 1,  row = 0, pady = (10,0))
 ttk.Label(tab1,  text ="Customer: ").grid(column = 2,  row = 0, padx = (15,0), pady = (10,0))
-ttk.Label(tab1,  text ="Kedai Emas Sangat Panjang").grid(column = 3,  row = 0, pady = (10,0))
+selectedc = StringVar()
+ttk.Label(tab1,  textvariable = selectedc).grid(column = 3,  row = 0, pady = (10,0))
 ttk.Label(tab1,  text ="Date: ").grid(column = 4,  row = 0, padx = (15,0), pady = (10,0))
-ttk.Label(tab1,  text ="Clicked date").grid(column = 5,  row = 0, pady = (10,0))
+selectedd = StringVar()
+ttk.Label(tab1,  textvariable = selectedd).grid(column = 5,  row = 0, pady = (10,0))
 ttk.Label(tab1,  text ="Item Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-ttk.Label(tab1,  text ="Clicked item code").grid(column = 1,  row = 1, padx = (5,0), pady = (10,0))
+selectedic = StringVar()
+ttk.Label(tab1,  textvariable = selectedic).grid(column = 1,  row = 1, padx = (5,0), pady = (10,0))
 ttk.Label(tab1,  text ="Sample Weight (g): ").grid(column = 2,  row = 1, padx = (5,0), pady = 10)
-ttk.Label(tab1,  text ="0.0001").grid(column = 3,  row = 1, padx = (5,0), pady = 10)
+selectedsw = StringVar()
+ttk.Label(tab1,  textvariable = selectedsw).grid(column = 3,  row = 1, padx = (5,0), pady = 10)
 
 # tab1 button #
 new_record = ttk.Button(tab1, text = 'NEW')
@@ -653,6 +678,7 @@ left_table.heading("3", text ="Date")
 left_table.heading("4", text ="Customer")
 # Inserting the items and their features to the columns built 
 loadmainlefttable()
+left_table.bind('<<TreeviewSelect>>', displaymainfromleft)
 # create a frame in tab 1 for right table
 right_table_frame = ttk.Frame(tab1)
 right_table_frame.grid(column = 4,  row = 2, columnspan = 4)
@@ -660,7 +686,7 @@ right_table_frame.grid(column = 4,  row = 2, columnspan = 4)
 right_table_scroll = ttk.Scrollbar(right_table_frame, orient ="vertical") 
 right_table_scroll.pack(side ='right', fill='y')
 # right table # 
-right_table = ttk.Treeview(right_table_frame, selectmode ='browse', height = 20, yscrollcommand = right_table_scroll.set, columns = ("1", "2", "3", "4"), show = 'headings') 
+right_table = ttk.Treeview(right_table_frame, selectmode ='browse', height = 20, yscrollcommand = right_table_scroll.set, columns = ("1", "2", "3", "4","5"), show = 'headings') 
 right_table.pack(side ='left')
 # Configuring scrollbar 
 right_table_scroll.configure(command = right_table.yview)
@@ -669,14 +695,16 @@ right_table.column("1", width = 100, anchor ='c')
 right_table.column("2", width = 100, anchor ='c') 
 right_table.column("3", width = 100, anchor ='c') 
 right_table.column("4", width = 100, anchor ='c') 
+right_table.column("5", width = 100, anchor ='c')
 # Assigning the heading names to the respective columns 
 right_table.heading("1", text ="Form Code") 
 right_table.heading("2", text ="Item") 
 right_table.heading("3", text ="Sample Weight")
 right_table.heading("4", text ="Sample Return")
+right_table.heading("5", text ="Result")
 # Inserting the items and their features to the columns built 
 loadmainrighttable()
-
+right_table.bind('<<TreeviewSelect>>', displaymainfromright)
 # tab 2 first weight #
 # frame for info
 fw_info_frame = ttk.Frame(tab2)
