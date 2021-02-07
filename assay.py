@@ -200,6 +200,12 @@ class NewFormCode(Toplevel):
       val = (now, now, code, weight, colorset, customerselected[0], formcode)
       mycursor.execute(sql, val)
       assaydb.commit()
+      for i in left_table.get_children():
+        left_table.delete(i)
+      loadmainlefttable()
+      for i in right_table.get_children():
+        right_table.delete(i)
+      loadmainrighttable()
       #clear boxes
       item_code.set("") 
       sample_weight.set("")
@@ -343,6 +349,12 @@ class NewRound(Toplevel):
       val = (now, now, code, weight, colorset, customerselected[0], formcode)
       mycursor.execute(sql, val)
       assaydb.commit()
+      for i in left_table.get_children():
+        left_table.delete(i)
+      loadmainlefttable()
+      for i in right_table.get_children():
+        right_table.delete(i)
+      loadmainrighttable()
       #clear boxes
       item_code.set("") 
       sample_weight.set("")
@@ -505,14 +517,53 @@ class AddToFormcode(Toplevel):
     sample_weight_entry.grid(column = 1,  row = 5)
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
 
-def selectmaintable():
-  mycursor.execute("SELECT * FROM assayresult")
-
+def loadmainlefttable():
+  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
   dbresult = mycursor.fetchall()
-
+  loadlefttable = []
   for x in dbresult:
-    print(x)
+    newx = list(x)
+    if newx[3] == 1:
+      newx[3] = True
+    else:
+      newx[3] = False
+    if loadlefttable:
+      if newx[0] == loadlefttable[-1][0]:
+        loadlefttable[-1][1] += 1
+      else:
+        newx.insert(1,int(1))
+        newx[2] = newx[2].strftime("%d/%m/%Y")
+        loadlefttable.append(newx)
+    else:
+      newx.insert(1,int(1))
+      newx[2] = newx[2].strftime("%d/%m/%Y")
+      loadlefttable.append(newx)
+  for record in loadlefttable:
+    if record[4]:
+      left_table.insert("", 'end', text ="L1", values =record, tags = ("true"))
+    else:
+      left_table.insert("", 'end', text ="L1", values =record, tags = ("false"))
+  left_table.tag_configure('true', background='lightcyan')
+  left_table.tag_configure('false', background='plum')
 
+def loadmainrighttable():
+  mycursor.execute("SELECT formcode, itemcode, sampleweight, samplereturn, finalresult, color FROM assayresult ORDER BY formcode")
+  dbresult = mycursor.fetchall()
+  loadrighttable = []
+  for x in dbresult:
+    newx = list(x)
+    if newx[5] == 1:
+      newx[5] = True
+    else:
+      newx[5] = False
+    loadrighttable.append(newx)
+  for record in loadrighttable:
+    if record[5]:
+      right_table.insert("", 'end', text ="L1", values =record, tags = ("true"))
+    else:
+      right_table.insert("", 'end', text ="L1", values =record, tags = ("false"))
+  right_table.tag_configure('true', background='lightcyan')
+  right_table.tag_configure('false', background='plum')
 
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
@@ -526,7 +577,6 @@ assaydb = mysql.connector.connect(
 
 print(assaydb)
 mycursor = assaydb.cursor()
-# selectmaintable()
 # Menu #
 menubar = Menu(root)
 filemenu = Menu(menubar, tearoff=0)
@@ -602,31 +652,7 @@ left_table.heading("2", text ="Item")
 left_table.heading("3", text ="Date")
 left_table.heading("4", text ="Customer")
 # Inserting the items and their features to the columns built 
-left_table.insert("", 'end', text ="L1", values =("Nidhi", "F", "25")) 
-left_table.insert("", 'end', text ="L2", values =("Nisha", "F", "23")) 
-left_table.insert("", 'end', text ="L3", values =("Preeti", "F", "27")) 
-left_table.insert("", 'end', text ="L4", values =("Rahul", "M", "20")) 
-left_table.insert("", 'end', text ="L5", values =("Sonu", "F", "18")) 
-left_table.insert("", 'end', text ="L6", values =("Rohit", "M", "19")) 
-left_table.insert("", 'end', text ="L7", values =("Geeta", "F", "25")) 
-left_table.insert("", 'end', text ="L8", values =("Ankit", "M", "22")) 
-left_table.insert("", 'end', text ="L10", values =("Mukul", "F", "25")) 
-left_table.insert("", 'end', text ="L11", values =("Mohit", "M", "16")) 
-left_table.insert("", 'end', text ="L12", values =("Vivek", "M", "22")) 
-left_table.insert("", 'end', text ="L13", values =("Suman", "F", "30")) 
-left_table.insert("", 'end', text ="L1", values =("Nidhi", "F", "25")) 
-left_table.insert("", 'end', text ="L2", values =("Nisha", "F", "23")) 
-left_table.insert("", 'end', text ="L3", values =("Preeti", "F", "27")) 
-left_table.insert("", 'end', text ="L4", values =("Rahul", "M", "20")) 
-left_table.insert("", 'end', text ="L5", values =("Sonu", "F", "18")) 
-left_table.insert("", 'end', text ="L6", values =("Rohit", "M", "19")) 
-left_table.insert("", 'end', text ="L7", values =("Geeta", "F", "25")) 
-left_table.insert("", 'end', text ="L8", values =("Ankit", "M", "22")) 
-left_table.insert("", 'end', text ="L10", values =("Mukul", "F", "25")) 
-left_table.insert("", 'end', text ="L11", values =("Mohit", "M", "16")) 
-left_table.insert("", 'end', text ="L12", values =("Vivek", "M", "22")) 
-left_table.insert("", 'end', text ="L13", values =("Suman", "F", "30")) 
-
+loadmainlefttable()
 # create a frame in tab 1 for right table
 right_table_frame = ttk.Frame(tab1)
 right_table_frame.grid(column = 4,  row = 2, columnspan = 4)
@@ -637,7 +663,7 @@ right_table_scroll.pack(side ='right', fill='y')
 right_table = ttk.Treeview(right_table_frame, selectmode ='browse', height = 20, yscrollcommand = right_table_scroll.set, columns = ("1", "2", "3", "4"), show = 'headings') 
 right_table.pack(side ='left')
 # Configuring scrollbar 
-right_table_scroll.configure(command = right_table.yview) 
+right_table_scroll.configure(command = right_table.yview)
 # Assigning the width and anchor to the respective columns 
 right_table.column("1", width = 100, anchor ='c') 
 right_table.column("2", width = 100, anchor ='c') 
@@ -649,30 +675,7 @@ right_table.heading("2", text ="Item")
 right_table.heading("3", text ="Sample Weight")
 right_table.heading("4", text ="Sample Return")
 # Inserting the items and their features to the columns built 
-right_table.insert("", 'end', text ="L1", values =("Nidhi", "F", "25")) 
-right_table.insert("", 'end', text ="L2", values =("Nisha", "F", "23")) 
-right_table.insert("", 'end', text ="L3", values =("Preeti", "F", "27")) 
-right_table.insert("", 'end', text ="L4", values =("Rahul", "M", "20")) 
-right_table.insert("", 'end', text ="L5", values =("Sonu", "F", "18")) 
-right_table.insert("", 'end', text ="L6", values =("Rohit", "M", "19")) 
-right_table.insert("", 'end', text ="L7", values =("Geeta", "F", "25")) 
-right_table.insert("", 'end', text ="L8", values =("Ankit", "M", "22")) 
-right_table.insert("", 'end', text ="L10", values =("Mukul", "F", "25")) 
-right_table.insert("", 'end', text ="L11", values =("Mohit", "M", "16")) 
-right_table.insert("", 'end', text ="L12", values =("Vivek", "M", "22")) 
-right_table.insert("", 'end', text ="L13", values =("Suman", "F", "30")) 
-right_table.insert("", 'end', text ="L1", values =("Nidhi", "F", "25")) 
-right_table.insert("", 'end', text ="L2", values =("Nisha", "F", "23")) 
-right_table.insert("", 'end', text ="L3", values =("Preeti", "F", "27")) 
-right_table.insert("", 'end', text ="L4", values =("Rahul", "M", "20")) 
-right_table.insert("", 'end', text ="L5", values =("Sonu", "F", "18")) 
-right_table.insert("", 'end', text ="L6", values =("Rohit", "M", "19")) 
-right_table.insert("", 'end', text ="L7", values =("Geeta", "F", "25")) 
-right_table.insert("", 'end', text ="L8", values =("Ankit", "M", "22")) 
-right_table.insert("", 'end', text ="L10", values =("Mukul", "F", "25")) 
-right_table.insert("", 'end', text ="L11", values =("Mohit", "M", "16")) 
-right_table.insert("", 'end', text ="L12", values =("Vivek", "M", "22")) 
-right_table.insert("", 'end', text ="L13", values =("Suman", "F", "30")) 
+loadmainrighttable()
 
 # tab 2 first weight #
 # frame for info
