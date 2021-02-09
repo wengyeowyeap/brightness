@@ -10,6 +10,7 @@ today = datetime.date.today()
 now = datetime.datetime.now()
 colorset = True
 formcode = 0
+mainselected = []
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -518,7 +519,7 @@ class AddToFormcode(Toplevel):
     sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
 
 def loadmainlefttable():
-  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
+  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
   dbresult = mycursor.fetchall()
   loadlefttable = []
   for x in dbresult:
@@ -547,11 +548,12 @@ def loadmainlefttable():
   left_table.tag_configure('false', background='plum')
 
 def loadmainrighttable():
-  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.finalresult AS finalresult, assayresult.color AS color, assayresult.created AS created, user.name AS customer FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
+  mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.finalresult AS finalresult, assayresult.color AS color, assayresult.created AS created, user.name AS customer, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
   dbresult = mycursor.fetchall()
   loadrighttable = []
   for x in dbresult:
     newx = list(x)
+    newx[6] = newx[6].strftime("%d/%m/%Y")
     if newx[5] == 1:
       newx[5] = True
     else:
@@ -568,22 +570,72 @@ def loadmainrighttable():
 def displaymainfromleft(a):
   curItem = left_table.focus()
   print(left_table.item(curItem).get('values'))
-  selected = left_table.item(curItem).get('values')
-  selectedfc.set(selected[0])
-  selectedc.set(selected[3])
-  selectedd.set(selected[2])
-  selectedic.set(selected[5])
-  selectedsw.set(selected[6])
+  global mainselected
+  mainselected = left_table.item(curItem).get('values')
+  selectedfc.set(mainselected[0])
+  selectedc.set(mainselected[3])
+  selectedd.set(mainselected[2])
+  selectedic.set(mainselected[5])
+  selectedsw.set(mainselected[6])
 
 def displaymainfromright(a):
   curItem = right_table.focus()
   print(right_table.item(curItem).get('values'))
-  selected = right_table.item(curItem).get('values')
-  selectedfc.set(selected[0])
-  selectedc.set(selected[7])
-  selectedd.set(selected[6])
-  selectedic.set(selected[1])
-  selectedsw.set(selected[2])
+  global mainselected
+  mainselected = right_table.item(curItem).get('values')
+  selectedfc.set(mainselected[0])
+  selectedc.set(mainselected[7])
+  selectedd.set(mainselected[6])
+  selectedic.set(mainselected[1])
+  selectedsw.set(mainselected[2])
+
+class DeleteRecord(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("Delete Item")
+    self.grab_set()
+
+    def deleteassay():
+      global mainselected
+      if len(mainselected) <= 8:
+        sql = f"DELETE FROM assayresult WHERE formcode = '{mainselected[0]}'"
+        mycursor.execute(sql)
+        assaydb.commit()
+        for i in left_table.get_children():
+          left_table.delete(i)
+          loadmainlefttable()
+        for i in right_table.get_children():
+          right_table.delete(i)
+        loadmainrighttable()
+        self.destroy()
+      else:
+        sql = f"DELETE FROM assayresult WHERE id = '{mainselected[8]}'"
+        mycursor.execute(sql)
+        assaydb.commit()
+        for i in left_table.get_children():
+          left_table.delete(i)
+          loadmainlefttable()
+        for i in right_table.get_children():
+          right_table.delete(i)
+        loadmainrighttable()
+        self.destroy()
+
+    deleteq = StringVar()
+    deleteitemverify = StringVar()
+    global mainselected
+    print(mainselected)
+    if len(mainselected) <= 8:
+      deleteq.set(f"Delete all item under this formcode?")
+      deleteitemverify.set(f"Customer: {mainselected[3]}\nFormcode: {mainselected[0]}\nTotal Item: {mainselected[1]}")
+    else:
+      deleteq.set(f"Are you sure you want to delete this item?")
+      deleteitemverify.set(f"Customer: {mainselected[7]}\nFormcode: {mainselected[0]}\nItemcode: {mainselected[1]}\n")
+    
+    Label(self,  textvariable = deleteq).grid(column = 0,  row = 0, padx=10, columnspan = 2)
+    Label(self,  textvariable = deleteitemverify).grid(column = 0,  row = 1, padx=10, columnspan = 2)
+
+    deleteok = Button(self, text = 'Ok', command = deleteassay).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+    deletecancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
 
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
@@ -648,6 +700,7 @@ new_round.grid(column = 6,  row = 1, padx = 10, pady = 10)
 new_round.bind("<Button>", lambda e: NewRound(root))
 delete_record = ttk.Button(tab1, text = 'DELETE')
 delete_record.grid(column = 7,  row = 0, padx = 10, pady = 10)
+delete_record.bind("<Button>", lambda e: DeleteRecord(root))
 edit_record = ttk.Button(tab1, text = 'EDIT')
 edit_record.grid(column = 8,  row = 0, padx = 10, pady = 10)
 edit_record.bind("<Button>", lambda e: EditRecord(root)) 
