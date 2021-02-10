@@ -482,44 +482,59 @@ class EditRecord(Toplevel):
 class AddToFormcode(Toplevel): 
   def __init__(self, master = None): 
     super().__init__(master = master) 
-    self.title("Edit Record")
-    self.geometry("280x450")
-    # Function for checking the key pressed and updating the listbox 
+    self.title("Add To Formcode")
+    self.geometry("280x450") 
+    self.grab_set()
 
-    # Driver code 
-    l = ['C','C++','Java', 
-        'Python','Perl', 
-        'PHP','ASP','JS',
-        "apple", "banana", "cherry", 
-        "orange", "kiwi", "melon", "mango",
-        "Rice", "Chickpeas", "Pulses", "bread", "meat",
-        "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-        "Chicken Pie", "Apple Pie", "Pudding" ]
+    global mainselected
+    formcodeadd = StringVar()
+    formcodeadd.set(mainselected[0])
+    formcodeaddsql = mainselected[0]
+    customeradd = StringVar()
 
+    if len(mainselected) <=8:
+      # search customer id
+      customeradd.set(mainselected[3])  
+      customeraddsql = mainselected[3]
+    else:
+      customeradd.set(mainselected[7])
+      customeraddsql = mainselected[7]   
+    
     def focusweight(event):
       sample_weight_entry.focus_set() 
 
-    def submit(event): 
-      code=item_code_entry.get() 
-      weight=sample_weight_entry.get()
-        
-      print("The code is : " + code) 
-      print("The weight is : " + weight) 
-        
-      item_code.set("") 
-      sample_weight.set("") 
+    def focusok(event):
+      addok.focus_set() 
 
-    #save Button
-    save_record = Button(self, text = 'Add', command = self.destroy)
-    save_record.grid(column = 0,  row = 6, padx = 10, pady = 10, ipadx = 5, ipady = 5)
-    #Close Button
-    close_new_record = Button(self, text = 'Close', command = self.destroy)
-    close_new_record.grid(column = 1,  row = 6, padx = 10, pady = 10, ipadx = 5, ipady = 5)
+    def addassay(): 
+      code=item_code_entry.get()
+      weight=sample_weight_entry.get()
+      print("The code is : " + code)
+      print("The weight is : " + weight)
+      sql = f"SELECT * FROM user WHERE name ='{customeraddsql}'"
+      mycursor.execute(sql)
+      customerselected = mycursor.fetchone()
+      #insert record
+      sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+      print(customerselected)
+      print(formcodeadd)
+      val = (now, now, code, weight, colorset, customerselected[0], formcodeaddsql)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in left_table.get_children():
+        left_table.delete(i)
+      loadmainlefttable()
+      for i in right_table.get_children():
+        right_table.delete(i)
+      loadmainrighttable()
+      self.destroy()
 
     Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    Label(self,  text ="VAR - Selected Form Code").grid(column = 1,  row = 1, pady = (10,0))
+    Label(self,  textvariable = formcodeadd).grid(column = 1,  row = 1, pady = (10,0))
     Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
-    Label(self,  text ="VAR - Current date").grid(column = 1,  row = 2, pady = (10,0))
+    showdate = StringVar()
+    showdate.set(today.strftime("%d/%m/%Y"))
+    Label(self,  textvariable = showdate).grid(column = 1,  row = 2, pady = (10,0))
     Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
     item_code = StringVar()
     item_code_entry = Entry(self, textvariable = item_code)
@@ -529,7 +544,14 @@ class AddToFormcode(Toplevel):
     sample_weight = DoubleVar()
     sample_weight_entry = Entry(self, textvariable = sample_weight)
     sample_weight_entry.grid(column = 1,  row = 5)
-    sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
+    sample_weight_entry.bind('<Return>', focusok) #trigger submit function when enter is pressed
+
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+    Label(self,  textvariable = customeradd).grid(column = 1,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+
+    addok = Button(self, text = 'Add', command = addassay)
+    addok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
+    addcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
 
 def loadmainlefttable():
   mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
