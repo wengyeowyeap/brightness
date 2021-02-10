@@ -418,7 +418,6 @@ class EditRecord(Toplevel):
   def __init__(self, master = None): 
     super().__init__(master = master) 
     self.title("Edit Record")
-    self.geometry("280x450") 
     # Function for checking the key pressed and updating the listbox 
 
     def focusweight(event):
@@ -451,33 +450,37 @@ class EditRecord(Toplevel):
       self.destroy()
 
     global mainselected
-    formcodee = StringVar()
-    dateee = StringVar()
-    customere = StringVar()
-    formcodee.set(mainselected[0])
-    dateee.set(mainselected[6])
-    customere.set(mainselected[7])
-    Label(self,  text ="Customer: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    Label(self,  textvariable = customere).grid(column = 1,  row = 1, pady = (10,0))
-    Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
-    Label(self,  textvariable =dateee).grid(column = 1,  row = 2, pady = (10,0))
-    Label(self,  text ="Form Code: ").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0))
-    Label(self,  textvariable = formcodee).grid(column = 1,  row = 3, pady = (10,0))
-    Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
-    item_code = StringVar()
-    item_code.set(mainselected[1])
-    item_code_entry = Entry(self, textvariable = item_code)
-    item_code_entry.grid(column = 1,  row = 4)
-    item_code_entry.bind('<Return>', focusweight)
-    Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
-    sample_weight = DoubleVar()
-    sample_weight.set(mainselected[2])
-    sample_weight_entry = Entry(self, textvariable = sample_weight)
-    sample_weight_entry.grid(column = 1,  row = 5)
-    sample_weight_entry.bind('<Return>', focusok)
-    editok = Button(self, text = 'Save', command = editassay)
-    editok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
-    editcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
+    if mainselected:
+      formcodee = StringVar()
+      dateee = StringVar()
+      customere = StringVar()
+      formcodee.set(mainselected[0])
+      dateee.set(mainselected[6])
+      customere.set(mainselected[7])
+      Label(self,  text ="Customer: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+      Label(self,  textvariable = customere).grid(column = 1,  row = 1, pady = (10,0))
+      Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+      Label(self,  textvariable =dateee).grid(column = 1,  row = 2, pady = (10,0))
+      Label(self,  text ="Form Code: ").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0))
+      Label(self,  textvariable = formcodee).grid(column = 1,  row = 3, pady = (10,0))
+      Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+      item_code = StringVar()
+      item_code.set(mainselected[1])
+      item_code_entry = Entry(self, textvariable = item_code)
+      item_code_entry.grid(column = 1,  row = 4)
+      item_code_entry.bind('<Return>', focusweight)
+      Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+      sample_weight = DoubleVar()
+      sample_weight.set(mainselected[2])
+      sample_weight_entry = Entry(self, textvariable = sample_weight)
+      sample_weight_entry.grid(column = 1,  row = 5)
+      sample_weight_entry.bind('<Return>', focusok)
+      editok = Button(self, text = 'Save', command = editassay)
+      editok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
+      editcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
+    else:
+      Label(self,  text = 'Please select an item to edit!').grid(column = 0,  row = 0, padx=10)
+      Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
 
 class AddToFormcode(Toplevel): 
   def __init__(self, master = None): 
@@ -486,20 +489,6 @@ class AddToFormcode(Toplevel):
     self.geometry("280x450") 
     self.grab_set()
 
-    global mainselected
-    formcodeadd = StringVar()
-    formcodeadd.set(mainselected[0])
-    formcodeaddsql = mainselected[0]
-    customeradd = StringVar()
-
-    if len(mainselected) <=8:
-      # search customer id
-      customeradd.set(mainselected[3])  
-      customeraddsql = mainselected[3]
-    else:
-      customeradd.set(mainselected[7])
-      customeraddsql = mainselected[7]   
-    
     def focusweight(event):
       sample_weight_entry.focus_set() 
 
@@ -529,29 +518,47 @@ class AddToFormcode(Toplevel):
       loadmainrighttable()
       self.destroy()
 
-    Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    Label(self,  textvariable = formcodeadd).grid(column = 1,  row = 1, pady = (10,0))
-    Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
-    showdate = StringVar()
-    showdate.set(today.strftime("%d/%m/%Y"))
-    Label(self,  textvariable = showdate).grid(column = 1,  row = 2, pady = (10,0))
-    Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
-    item_code = StringVar()
-    item_code_entry = Entry(self, textvariable = item_code)
-    item_code_entry.grid(column = 1,  row = 4)
-    item_code_entry.bind('<Return>', focusweight)
-    Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
-    sample_weight = DoubleVar()
-    sample_weight_entry = Entry(self, textvariable = sample_weight)
-    sample_weight_entry.grid(column = 1,  row = 5)
-    sample_weight_entry.bind('<Return>', focusok) #trigger submit function when enter is pressed
+    global mainselected
+    if mainselected:
+      formcodeadd = StringVar()
+      formcodeadd.set(mainselected[0])
+      formcodeaddsql = mainselected[0]
+      customeradd = StringVar()
 
-    Label(self,  text ="Customer: ").grid(column = 0,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
-    Label(self,  textvariable = customeradd).grid(column = 1,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+      if len(mainselected) <=8:
+        # search customer id
+        customeradd.set(mainselected[3])  
+        customeraddsql = mainselected[3]
+      else:
+        customeradd.set(mainselected[7])
+        customeraddsql = mainselected[7]   
+      
+      Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+      Label(self,  textvariable = formcodeadd).grid(column = 1,  row = 1, pady = (10,0))
+      Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+      showdate = StringVar()
+      showdate.set(today.strftime("%d/%m/%Y"))
+      Label(self,  textvariable = showdate).grid(column = 1,  row = 2, pady = (10,0))
+      Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+      item_code = StringVar()
+      item_code_entry = Entry(self, textvariable = item_code)
+      item_code_entry.grid(column = 1,  row = 4)
+      item_code_entry.bind('<Return>', focusweight)
+      Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+      sample_weight = DoubleVar()
+      sample_weight_entry = Entry(self, textvariable = sample_weight)
+      sample_weight_entry.grid(column = 1,  row = 5)
+      sample_weight_entry.bind('<Return>', focusok) #trigger submit function when enter is pressed
 
-    addok = Button(self, text = 'Add', command = addassay)
-    addok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
-    addcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
+      Label(self,  text ="Customer: ").grid(column = 0,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+      Label(self,  textvariable = customeradd).grid(column = 1,  row = 3, padx = (15,0), pady = (10,0), sticky = N)
+
+      addok = Button(self, text = 'Add', command = addassay)
+      addok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
+      addcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
+    else:
+      Label(self,  text = 'Please select an item!').grid(column = 0,  row = 0, padx=10, columnspan = 2)
+      Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
 
 def loadmainlefttable():
   mycursor.execute("SELECT assayresult.formcode AS formcode, assayresult.created AS created, user.name AS customer, assayresult.color AS color, assayresult.itemcode AS itemcode, assayresult.sampleweight AS sampleweight, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode")
@@ -654,22 +661,27 @@ class DeleteRecord(Toplevel):
           right_table.delete(i)
         loadmainrighttable()
         self.destroy()
-
-    deleteq = StringVar()
-    deleteitemverify = StringVar()
-    global mainselected
-    if len(mainselected) <= 8:
-      deleteq.set(f"Delete all item under this formcode?")
-      deleteitemverify.set(f"Customer: {mainselected[3]}\nFormcode: {mainselected[0]}\nTotal Item: {mainselected[1]}")
-    else:
-      deleteq.set(f"Are you sure you want to delete this item?")
-      deleteitemverify.set(f"Customer: {mainselected[7]}\nFormcode: {mainselected[0]}\nItemcode: {mainselected[1]}\n")
     
-    Label(self,  textvariable = deleteq).grid(column = 0,  row = 0, padx=10, columnspan = 2)
-    Label(self,  textvariable = deleteitemverify).grid(column = 0,  row = 1, padx=10, columnspan = 2)
+    global mainselected
+    if mainselected:
+      deleteq = StringVar()
+      deleteitemverify = StringVar()
+      if len(mainselected) <= 8:
+        deleteq.set(f"Delete all item under this formcode?")
+        deleteitemverify.set(f"Customer: {mainselected[3]}\nFormcode: {mainselected[0]}\nTotal Item: {mainselected[1]}")
+      else:
+        deleteq.set(f"Are you sure you want to delete this item?")
+        deleteitemverify.set(f"Customer: {mainselected[7]}\nFormcode: {mainselected[0]}\nItemcode: {mainselected[1]}\n")
+      
+      Label(self,  textvariable = deleteq).grid(column = 0,  row = 0, padx=10, columnspan = 2)
+      Label(self,  textvariable = deleteitemverify).grid(column = 0,  row = 1, padx=10, columnspan = 2)
 
-    deleteok = Button(self, text = 'Ok', command = deleteassay).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
-    deletecancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
+      deleteok = Button(self, text = 'Ok', command = deleteassay).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+      deletecancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
+    else:
+      Label(self,  text = 'Please select an item to delete!').grid(column = 0,  row = 0, padx=10)
+      Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+    
 
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
