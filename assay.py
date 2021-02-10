@@ -421,50 +421,63 @@ class EditRecord(Toplevel):
     self.geometry("280x450") 
     # Function for checking the key pressed and updating the listbox 
 
-    # Driver code 
-    l = ['C','C++','Java', 
-        'Python','Perl', 
-        'PHP','ASP','JS',
-        "apple", "banana", "cherry", 
-        "orange", "kiwi", "melon", "mango",
-        "Rice", "Chickpeas", "Pulses", "bread", "meat",
-        "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-        "Chicken Pie", "Apple Pie", "Pudding" ]
-
     def focusweight(event):
+      print(sample_weight_entry)
       sample_weight_entry.focus_set() 
 
-    def submit(event): 
-      code=item_code_entry.get() 
+    def focusok(event):
+      print(editok)
+      editok.focus_set() 
+
+    def editassay(): 
+      code=item_code_entry.get()
       weight=sample_weight_entry.get()
-        
-      print("The code is : " + code) 
-      print("The weight is : " + weight) 
-        
-      item_code.set("") 
-      sample_weight.set("") 
+      print("The code is : " + code)
+      print("The weight is : " + weight)
+      global mainselected
+      id = mainselected[8]
+      global now
+      #update record using id
+      sql = "UPDATE assayresult SET itemcode = %s, sampleweight = %s, modified = %s WHERE id = %s"
+      val = (code, weight, now, id)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in left_table.get_children():
+        left_table.delete(i)
+      loadmainlefttable()
+      for i in right_table.get_children():
+        right_table.delete(i)
+      loadmainrighttable()
+      self.destroy()
 
-    #save Button
-    save_record = Button(self, text = 'Save', command = self.destroy)
-    save_record.grid(column = 0,  row = 6, padx = 10, pady = 10, ipadx = 5, ipady = 5)
-    #Close Button
-    close_new_record = Button(self, text = 'Close', command = self.destroy)
-    close_new_record.grid(column = 1,  row = 6, padx = 10, pady = 10, ipadx = 5, ipady = 5)
-
-    Label(self,  text ="Form Code: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
-    Label(self,  text ="VAR - Selected Form Code").grid(column = 1,  row = 1, pady = (10,0))
+    global mainselected
+    formcodee = StringVar()
+    dateee = StringVar()
+    customere = StringVar()
+    formcodee.set(mainselected[0])
+    dateee.set(mainselected[6])
+    customere.set(mainselected[7])
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+    Label(self,  textvariable = customere).grid(column = 1,  row = 1, pady = (10,0))
     Label(self,  text ="Date: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
-    Label(self,  text ="VAR - Current date").grid(column = 1,  row = 2, pady = (10,0))
+    Label(self,  textvariable =dateee).grid(column = 1,  row = 2, pady = (10,0))
+    Label(self,  text ="Form Code: ").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0))
+    Label(self,  textvariable = formcodee).grid(column = 1,  row = 3, pady = (10,0))
     Label(self,  text ="Item Code: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
     item_code = StringVar()
+    item_code.set(mainselected[1])
     item_code_entry = Entry(self, textvariable = item_code)
     item_code_entry.grid(column = 1,  row = 4)
     item_code_entry.bind('<Return>', focusweight)
     Label(self,  text ="Sample Weight (g): ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
     sample_weight = DoubleVar()
+    sample_weight.set(mainselected[2])
     sample_weight_entry = Entry(self, textvariable = sample_weight)
     sample_weight_entry.grid(column = 1,  row = 5)
-    sample_weight_entry.bind('<Return>', submit) #trigger submit function when enter is pressed
+    sample_weight_entry.bind('<Return>', focusok)
+    editok = Button(self, text = 'Save', command = editassay)
+    editok.grid(column = 0,  row = 6, ipadx = 5, ipady = 5)
+    editcancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 6, ipadx = 5, ipady = 5)
 
 class AddToFormcode(Toplevel): 
   def __init__(self, master = None): 
@@ -623,7 +636,6 @@ class DeleteRecord(Toplevel):
     deleteq = StringVar()
     deleteitemverify = StringVar()
     global mainselected
-    print(mainselected)
     if len(mainselected) <= 8:
       deleteq.set(f"Delete all item under this formcode?")
       deleteitemverify.set(f"Customer: {mainselected[3]}\nFormcode: {mainselected[0]}\nTotal Item: {mainselected[1]}")
