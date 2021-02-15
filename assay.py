@@ -11,6 +11,7 @@ now = datetime.datetime.now()
 colorset = True
 formcode = 0
 mainselected = []
+fwselected = []
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -116,11 +117,47 @@ def assaysetting():
   loss_table.heading("2", text ="Maximum") 
   loss_table.heading("3", text ="Loss %")
 
+root = ThemedTk(theme="clearlooks")
+root.title("Brightness Assay")
+
+assaydb = mysql.connector.connect(
+          host = config('MYSQLHOST'),
+          user = config('MYSQLUSER'),
+          passwd = config('MYSQLPW'),
+          database="assay"
+        )
+
+print(assaydb)
+mycursor = assaydb.cursor()
+# Menu #
+menubar = Menu(root)
+filemenu = Menu(menubar, tearoff=0)
+menubar.add_cascade(label="Menu", menu=filemenu)
+filemenu.add_command(label="Printer Setting", command=printersetting)
+filemenu.add_command(label="Assay Setting", command=assaysetting)
+filemenu.add_separator()
+filemenu.add_command(label="Exit", command=root.quit)
+
+# Tab #
+tabControl = ttk.Notebook(root) 
+tab1 = ttk.Frame(tabControl) 
+tab2 = ttk.Frame(tabControl) 
+tab3 = ttk.Frame(tabControl) 
+tab4 = ttk.Frame(tabControl) 
+tab5 = ttk.Frame(tabControl) 
+tab6 = ttk.Frame(tabControl) 
+tabControl.add(tab1, text ='Main') 
+tabControl.add(tab2, text ='First Weight')
+tabControl.add(tab3, text ='Last Weight') 
+tabControl.add(tab4, text ='Sample Return') 
+tabControl.add(tab5, text ='History') 
+tabControl.add(tab6, text ='Customer') 
+tabControl.pack(expand = 1, fill ="both") 
+
 class NewFormCode(Toplevel): 
   def __init__(self, master = None): 
     super().__init__(master = master) 
-    self.title("New Formcode")
-    self.geometry("280x450") 
+    self.title("New Formcode") 
     self.grab_set()
     def setformcode():
       global formcode
@@ -269,7 +306,6 @@ class NewRound(Toplevel):
   def __init__(self, master = None): 
     super().__init__(master = master) 
     self.title("New Formcode")
-    self.geometry("280x450") 
     self.grab_set()
     def setformcode():
       global formcode
@@ -418,6 +454,7 @@ class EditRecord(Toplevel):
   def __init__(self, master = None): 
     super().__init__(master = master) 
     self.title("Edit Record")
+    self.grab_set()
     # Function for checking the key pressed and updating the listbox 
 
     def focusweight(event):
@@ -682,44 +719,6 @@ class DeleteRecord(Toplevel):
       Label(self,  text = 'Please select an item to delete!').grid(column = 0,  row = 0, padx=10)
       Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
     
-
-root = ThemedTk(theme="clearlooks")
-root.title("Brightness Assay")
-
-assaydb = mysql.connector.connect(
-          host = config('MYSQLHOST'),
-          user = config('MYSQLUSER'),
-          passwd = config('MYSQLPW'),
-          database="assay"
-        )
-
-print(assaydb)
-mycursor = assaydb.cursor()
-# Menu #
-menubar = Menu(root)
-filemenu = Menu(menubar, tearoff=0)
-menubar.add_cascade(label="Menu", menu=filemenu)
-filemenu.add_command(label="Printer Setting", command=printersetting)
-filemenu.add_command(label="Assay Setting", command=assaysetting)
-filemenu.add_separator()
-filemenu.add_command(label="Exit", command=root.quit)
-
-# Tab #
-tabControl = ttk.Notebook(root) 
-tab1 = ttk.Frame(tabControl) 
-tab2 = ttk.Frame(tabControl) 
-tab3 = ttk.Frame(tabControl) 
-tab4 = ttk.Frame(tabControl) 
-tab5 = ttk.Frame(tabControl) 
-tab6 = ttk.Frame(tabControl) 
-tabControl.add(tab1, text ='Main') 
-tabControl.add(tab2, text ='First Weight')
-tabControl.add(tab3, text ='Last Weight') 
-tabControl.add(tab4, text ='Sample Return') 
-tabControl.add(tab5, text ='History') 
-tabControl.add(tab6, text ='Customer') 
-tabControl.pack(expand = 1, fill ="both") 
-
 #tab 1#
 ttk.Label(tab1,  text ="Form Code: ").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0))
 selectedfc = StringVar()
@@ -804,14 +803,96 @@ right_table.heading("5", text ="Result")
 # Inserting the items and their features to the columns built 
 loadmainrighttable()
 right_table.bind('<<TreeviewSelect>>', displaymainfromright)
+
+def loadfirstweighttable():
+  mycursor.execute("SELECT user.name AS customer, assayresult.itemcode AS itemcode, assayresult.fwa AS fwa, assayresult.fwb AS fwb, assayresult.silverpct AS silverpct, assayresult.color AS color, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode, assayresult.created")
+  dbresult = mycursor.fetchall()
+  loadfwtable = []
+  for x in dbresult:
+    newx = list(x)
+    if newx[5] == 1:
+      newx[5] = True
+    else:
+      newx[5] = False
+    loadfwtable.append(newx)
+  for record in loadfwtable:
+    if record[2]:
+      pass
+    else:
+      global fwselected
+      fwselected = record
+      break
+  for record in loadfwtable:
+    if record[5]:
+      fw_table.insert("", 'end', text ="L1", iid=record[6], values =record, tags = ("true"))
+    else:
+      fw_table.insert("", 'end', text ="L1", iid=record[6], values =record, tags = ("false"))
+  fw_table.tag_configure('true', background='lightcyan')
+  fw_table.tag_configure('false', background='plum')
+  fw_table.selection_set(fwselected[6])
+  fw_table.focus(fwselected[6])
+
+def displayfw(a):
+  curItem = fw_table.focus()
+  print(fw_table.item(curItem).get('values'))
+  global fwselected
+  fwselected = fw_table.item(curItem).get('values')
+  customerfw.set(fwselected[0])
+  itemcodefw.set(fwselected[1])
+  if fwselected[2] == 'None' and fwselected[3] == 'None':
+    fwa.set("")
+    fwb.set("")
+    fwa_entry.configure(state = 'normal')
+    fwb_entry.configure(state = 'normal')
+    pct_entry.configure(state = 'readonly')
+  else:
+    fwa.set(fwselected[2])
+    fwb.set(fwselected[3])
+    fwa_entry.configure(state = 'disabled')
+    fwb_entry.configure(state = 'disabled')
+    pct_entry.configure(state = 'disabled')
+
+def focusfwb(event):
+  fwb_entry.focus_set()
+def focuspct(event):
+  pct_entry.focus_set()
+def submitfw(a): 
+  firstweighta=fwa_entry.get()
+  firstweightb=fwb_entry.get()
+  silver = pct_entry.get() 
+  print("FWA : " + firstweighta)
+  print("FWB : " + firstweightb)
+  print("PCT : "+ silver)
+  global fwselected
+  id = fwselected[6]
+  global now
+  #update record using id
+  sql = "UPDATE assayresult SET fwa = %s, fwb = %s, silverpct = %s, modified = %s WHERE id = %s"
+  val = (firstweighta, firstweightb, silver, now, id)
+  mycursor.execute(sql, val)
+  assaydb.commit()
+  for i in fw_table.get_children():
+    fw_table.delete(i)
+  loadfirstweighttable()
+  fwa_entry.focus_set()
+  pct_entry.current(0)
+
+def editfw():
+  print('enter')
+  fwa_entry.configure(state = 'normal')
+  fwb_entry.configure(state = 'normal')
+  pct_entry.configure(state = 'readonly')
+  fwa_entry.focus_set()
 # tab 2 first weight #
 # frame for info
 fw_info_frame = ttk.Frame(tab2)
 fw_info_frame.grid(column = 0,  row = 0)
+customerfw = StringVar()
+itemcodefw = StringVar()
 ttk.Label(fw_info_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(fw_info_frame,  text ="Kedai Emas Sangat Panjang").grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(fw_info_frame,  textvariable = customerfw).grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
 ttk.Label(fw_info_frame,  text ="Item Code").grid(column = 0,  row = 2, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(fw_info_frame,  text ="Clicked Item Code").grid(column = 0,  row = 3, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(fw_info_frame,  textvariable = itemcodefw).grid(column = 0,  row = 3, padx = (5,0),pady = (10,0), sticky=W)
 fw_entry_frame = ttk.Frame(tab2)
 fw_entry_frame.grid(column = 1,  row = 0)
 ttk.Label(fw_entry_frame,  text ="A").grid(column = 0,  row = 0, padx = 10)
@@ -819,18 +900,20 @@ ttk.Label(fw_entry_frame,  text ="B").grid(column = 0,  row = 1, padx = 10)
 fwa = IntVar()
 fwa_entry = Entry(fw_entry_frame, textvariable = fwa)
 fwa_entry.grid(column = 1,  row = 0)
+fwa_entry.bind('<Return>', focusfwb)
 fwb = IntVar()
 fwb_entry = Entry(fw_entry_frame, textvariable = fwb)
 fwb_entry.grid(column = 1,  row = 1)
+fwb_entry.bind('<Return>', focuspct)
 fw_pct_frame = ttk.Frame(tab2)
 fw_pct_frame.grid(column = 2,  row = 0, padx = 20)
-ttk.Label(fw_pct_frame, text = "Silver %", font = ("Times New Roman", 10)).grid(column = 0, row = 0) 
-silver_pct = IntVar() 
-pct_entry = ttk.Combobox(fw_pct_frame, width = 10, textvariable = silver_pct, values = [900, 750], state = 'readonly') 
+ttk.Label(fw_pct_frame, text = "Silver %", font = ("Times New Roman", 10)).grid(column = 0, row = 0)
+pct_entry = ttk.Combobox(fw_pct_frame, state = "readonly", values = ["900", "750"]) 
 pct_entry.grid(column = 0, row = 1) 
-pct_entry.current()
+pct_entry.current(0)
+pct_entry.bind('<Return>', submitfw)
 #edit button
-edit_fw = ttk.Button(tab2, text = 'EDIT')
+edit_fw = ttk.Button(tab2, text = 'EDIT', command= editfw)
 edit_fw.grid(column = 3,  row = 0, padx = 10, ipadx = 10, ipady = 10, rowspan = 2)
 fw_table_frame = ttk.Frame(tab2)
 fw_table_frame.grid(column = 0,  row = 2, columnspan = 4)
@@ -854,9 +937,10 @@ fw_table.heading("2", text ="Item Code")
 fw_table.heading("3", text ="A")
 fw_table.heading("4", text ="B")
 fw_table.heading("5", text ="%")
+loadfirstweighttable()
+fw_table.bind('<<TreeviewSelect>>', displayfw)
 
-
-# tab 3 - first weight #
+# tab 3 - last weight #
 # frame for info
 lw_info_frame = ttk.Frame(tab3)
 lw_info_frame.grid(column = 0,  row = 0)
