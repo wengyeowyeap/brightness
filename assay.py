@@ -12,6 +12,8 @@ colorset = True
 formcode = 0
 mainselected = []
 fwselected = []
+lossmode = "new"
+lossselected = []
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -79,24 +81,135 @@ def assaysetting():
   submit_company_profile.grid(column = 0,  row = 8, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 2) 
 
   #tab3 - Loss
+  class DeleteLossWindow(Toplevel): 
+    def __init__(self, master = None): 
+      super().__init__(master = master) 
+      self.title("Delete Item")
+      self.grab_set()
+
+      def deleteloss():
+        global lossselected
+        sql = f"DELETE FROM loss WHERE id = '{lossselected[3]}'"
+        mycursor.execute(sql)
+        assaydb.commit()
+        for i in loss_table.get_children():
+          loss_table.delete(i)
+        loadlosstable()
+        self.destroy()
+
+      global lossselected
+      if lossselected:
+        deleteq = StringVar()
+        deleteq.set(f"Confirm delete?")
+        Label(self,  textvariable = deleteq).grid(column = 0,  row = 0, padx=10, columnspan = 2)
+
+        deleteok = Button(self, text = 'Ok', command = deleteloss).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+        deletecancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
+      else:
+        Label(self,  text = 'Please select an item to delete!').grid(column = 0,  row = 0, padx=10)
+        Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+    
+  def loadlosstable():
+    mycursor.execute("SELECT low, high, pct, id FROM loss ORDER BY low DESC")
+    dbresult = mycursor.fetchall()
+    for record in dbresult:
+      loss_table.insert("", 'end', text ="L1", values =record)
+  def displayloss(a):
+    curItem = loss_table.focus()
+    print(loss_table.item(curItem).get('values'))
+    global lossselected
+    lossselected = loss_table.item(curItem).get('values')
+    low.set(lossselected[0])
+    high.set(lossselected[1])
+    losssetting.set(lossselected[2])
+    low_entry.configure(state = 'disabled')
+    high_entry.configure(state = 'disabled')
+    losssetting_entry.configure(state = 'disabled')
+  def focushigh(event):
+    high_entry.focus_set()
+  def focusloss(event):
+    losssetting_entry.focus_set()
+  def submitloss(a):
+    lowentry = low_entry.get()
+    highentry = high_entry.get()
+    losssettingentry = losssetting_entry.get() 
+    print("LOW : " + lowentry)
+    print("HIGH : " + highentry)
+    print("LOSS : "+ losssettingentry)
+    global now
+    global lossmode
+    if lossmode == "new":
+      #insert new
+      sql = "INSERT INTO loss (low, high, pct, created, modified) VALUES (%s, %s, %s, %s, %s)"
+      val = (lowentry, highentry, losssettingentry, now, now)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in loss_table.get_children():
+        loss_table.delete(i)
+      loadlosstable()
+      low.set("")
+      high.set("")
+      losssetting.set("")
+      low_entry.focus_set()
+    elif lossmode == "edit":
+      global lossselected
+      id = lossselected[3]
+      sql = "UPDATE loss SET low=%s, high=%s, pct=%s, modified=%s WHERE id = %s"
+      val = (lowentry, highentry, losssettingentry, now, id)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in loss_table.get_children():
+        loss_table.delete(i)
+      loadlosstable()
+      low.set(lowentry)
+      high.set(highentry)
+      losssetting.set(losssettingentry)
+      low_entry.configure(state = 'readonly')
+      high_entry.configure(state = 'readonly')
+      losssetting_entry.configure(state = 'readonly')
+
+  def newloss():
+    global lossmode
+    lossmode = "new"
+    low.set("")
+    high.set("")
+    losssetting.set("")
+    low_entry.configure(state = 'normal')
+    high_entry.configure(state = 'normal')
+    losssetting_entry.configure(state = 'normal')
+    low_entry.focus_set()
+  def editloss():
+    global lossmode
+    lossmode = "edit"
+    low_entry.configure(state = 'normal')
+    high_entry.configure(state = 'normal')
+    losssetting_entry.configure(state = 'normal')
+    low_entry.focus_set()
+
   # create frame for input (add/edit)
   loss_input_frame = Frame(tab3)
   loss_input_frame.grid(column = 0,  row = 0)
   low = StringVar()
-  low_entry = Entry(loss_input_frame, textvariable = low).grid(column = 0,  row = 0)
-  ttk.Label(loss_input_frame,  text ="≥ Result ≥").grid(column = 1,  row = 0, padx = 10)
+  low_entry = Entry(loss_input_frame, textvariable = low)
+  low_entry.grid(column = 0,  row = 0)
+  low_entry.bind('<Return>', focushigh)
+  ttk.Label(loss_input_frame,  text ="≤ Result ≤").grid(column = 1,  row = 0, padx = 10)
   high = StringVar()
-  high_entry = Entry(loss_input_frame, textvariable = high).grid(column = 2,  row = 0)
+  high_entry = Entry(loss_input_frame, textvariable = high)
+  high_entry.grid(column = 2,  row = 0)
+  high_entry.bind('<Return>', focusloss)
   ttk.Label(loss_input_frame,  text ="Loss %").grid(column = 0,  row = 2, padx = 10)
-  contact = StringVar()
-  contact_entry = Entry(loss_input_frame, textvariable = contact).grid(column = 1,  row = 2, columnspan = 3)
-  new_loss = ttk.Button(loss_input_frame, text = 'NEW')
+  losssetting = StringVar()
+  losssetting_entry = Entry(loss_input_frame, textvariable = losssetting)
+  losssetting_entry.grid(column = 1,  row = 2, columnspan = 3)
+  losssetting_entry.bind('<Return>', submitloss)
+  new_loss = ttk.Button(loss_input_frame, text = 'NEW', command = newloss)
   new_loss.grid(column = 0,  row = 3, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3) 
-  edit_loss = ttk.Button(loss_input_frame, text = 'EDIT')
+  edit_loss = ttk.Button(loss_input_frame, text = 'EDIT', command = editloss)
   edit_loss.grid(column = 0,  row = 4, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3) 
   delete_loss = ttk.Button(loss_input_frame, text = 'DELETE')
   delete_loss.grid(column = 0,  row = 5, padx = 10, pady = 10, ipadx = 10, ipady = 10, columnspan = 3)
-
+  delete_loss.bind("<Button>", lambda e: DeleteLossWindow(tab3))
   # create frame for loss table
   loss_table_frame = Frame(tab3)
   loss_table_frame.grid(column = 1,  row = 0)
@@ -116,6 +229,8 @@ def assaysetting():
   loss_table.heading("1", text ="Minimum") 
   loss_table.heading("2", text ="Maximum") 
   loss_table.heading("3", text ="Loss %")
+  loss_table.bind('<<TreeviewSelect>>', displayloss)
+  loadlosstable()
 
 root = ThemedTk(theme="clearlooks")
 root.title("Brightness Assay")
@@ -851,7 +966,6 @@ def displayfw(a):
     fwa_entry.configure(state = 'disabled')
     fwb_entry.configure(state = 'disabled')
     pct_entry.configure(state = 'disabled')
-
 def focusfwb(event):
   fwb_entry.focus_set()
 def focuspct(event):
@@ -876,7 +990,6 @@ def submitfw(a):
   loadfirstweighttable()
   fwa_entry.focus_set()
   pct_entry.current(0)
-
 def editfw():
   print('enter')
   fwa_entry.configure(state = 'normal')
