@@ -1,10 +1,12 @@
 from tkinter import *  
 from tkinter import ttk
+import tkinter.font as font
 from tkcalendar import Calendar, DateEntry
 from ttkthemes import ThemedTk
 import datetime
 import mysql.connector
 from decouple import config
+from decimal import Decimal
 
 today = datetime.date.today()
 now = datetime.datetime.now()
@@ -12,6 +14,7 @@ colorset = True
 formcode = 0
 mainselected = []
 fwselected = []
+lwselected = []
 lossmode = "new"
 lossselected = []
 
@@ -960,6 +963,7 @@ def displayfw(a):
     fwa_entry.configure(state = 'normal')
     fwb_entry.configure(state = 'normal')
     pct_entry.configure(state = 'readonly')
+    fwa_entry.focus_set()
   else:
     fwa.set(fwselected[2])
     fwb.set(fwselected[3])
@@ -1053,14 +1057,232 @@ fw_table.heading("5", text ="%")
 loadfirstweighttable()
 fw_table.bind('<<TreeviewSelect>>', displayfw)
 
+
+def resultwindow(customer, itemcode, preresult, currentloss, finalresult, id):
+  def changeloss(a):
+    newloss = Decimal(loss_entry.get())
+    newresult = preresult - newloss
+    sql = "UPDATE assayresult SET loss = %s, finalresult = %s, modified = %s WHERE id = %s"
+    val = (newloss, newresult, now, id)
+    mycursor.execute(sql, val)
+    assaydb.commit()
+    result.set(newresult)
+    showresult.set(newresult)
+    button.focus_set()
+
+  def closewindow():
+    resultwindow.destroy()
+    for i in lw_table.get_children():
+      lw_table.delete(i)
+    loadlastweighttable()
+
+  resultwindow = Toplevel(root)
+  resultwindow.grab_set()
+  rw_info_frame = ttk.Frame(resultwindow)
+  rw_info_frame.grid(column = 0,  row = 0)
+  customerrw = StringVar()
+  itemcoderw = StringVar()
+  customerrw.set(customer)
+  itemcoderw.set(itemcode)
+  ttk.Label(rw_info_frame,  text ="Customer: ").grid(column = 0,  row = 0, sticky=W)
+  ttk.Label(rw_info_frame,  textvariable = customerrw).grid(column = 1, row = 0, sticky=W)
+  ttk.Label(rw_info_frame,  text ="Item Code: ").grid(column = 2,  row = 0, sticky=W)
+  ttk.Label(rw_info_frame,  textvariable = itemcoderw).grid(column = 3,  row = 0, sticky=W)
+  rw_calc_frame = ttk.Frame(resultwindow)
+  rw_calc_frame.grid(column = 0,  row = 1)
+  avg_result = IntVar()
+  avg_result.set(preresult)
+  avg_result_entry = Entry(rw_calc_frame, textvariable = avg_result, state = 'disabled')
+  avg_result_entry.grid(column = 0,  row = 1, rowspan = 2)
+  ttk.Label(rw_calc_frame,  text ="-").grid(column = 1,  row = 1, padx = 5, rowspan = 2)
+  ttk.Label(rw_calc_frame,  text ="Loss").grid(column = 2,  row = 0, padx = 5)
+  loss = IntVar()
+  loss.set(currentloss)
+  loss_entry = Entry(rw_calc_frame, textvariable = loss)
+  loss_entry.grid(column = 2,  row = 1, rowspan = 2)
+  loss_entry.bind('<Return>', changeloss)
+  ttk.Label(rw_calc_frame,  text ="=").grid(column = 3,  row = 1, rowspan = 2, padx = 5)
+  ttk.Label(rw_calc_frame,  text ="Result").grid(column = 4,  row = 0)
+  result = IntVar()
+  result_entry = Entry(rw_calc_frame, textvariable = result, state = 'disabled')
+  result_entry.grid(column = 4,  row = 1, rowspan = 2)
+  showresult_frame = ttk.Frame(resultwindow)
+  showresult_frame.grid(column = 0, row = 2)
+  bigfont = font.Font(size=30)
+  resultlabel = ttk.Label(showresult_frame,  text ="Result: ")
+  resultlabel.grid(column = 0,  row = 0)
+  resultlabel['font'] = bigfont
+  showresult = IntVar()
+  showresult.set(finalresult)
+  numberlabel = ttk.Label(showresult_frame,  textvariable = showresult, foreground="red")
+  numberlabel.grid(column = 1,  row = 0)
+  numberlabel['font'] = bigfont
+  button_frame = ttk.Frame(resultwindow)
+  button_frame.grid(column = 0,  row = 3)
+  button = ttk.Button(button_frame, text = 'Ok', command = closewindow)
+  button.grid(column = 0,  row = 0, padx = 10, ipadx = 10, ipady = 10)
+
+
+def resulterror(lastweighta, lastweightb, resulta, resultb, finalresult):
+  resulterror = Toplevel(root)
+  resulterror.grab_set()
+
+  def redoassay():
+    finalresult = None
+    global lwselected
+    id = lwselected[13]
+    global now
+    #update record using id
+    sql = "UPDATE assayresult SET lwa = %s, lwb = %s, resulta = %s, resultb = %s, finalresult = %s, modified = %s WHERE id = %s"
+    val = (lastweighta, lastweightb, resulta, resultb, finalresult, now, id)
+    mycursor.execute(sql, val)
+    assaydb.commit()
+    for i in lw_table.get_children():
+      lw_table.delete(i)
+    loadlastweighttable()
+    resulterror.destroy()
+    lwa_entry.focus_set()
+  def rejectassay():
+    finalresult = -1
+    global lwselected
+    id = lwselected[13]
+    global now
+    #update record using id
+    sql = "UPDATE assayresult SET lwa = %s, lwb = %s, resulta = %s, resultb = %s, finalresult = %s, modified = %s WHERE id = %s"
+    val = (lastweighta, lastweightb, resulta, resultb, finalresult, now, id)
+    mycursor.execute(sql, val)
+    assaydb.commit()
+    for i in lw_table.get_children():
+      lw_table.delete(i)
+    loadlastweighttable()
+    resulterror.destroy()
+    lwa_entry.focus_set()
+
+  Label(resulterror, text = "Difference of two sample result > 1.").grid(column = 0,  row = 0, padx=10, columnspan = 2)
+  Label(resulterror, text = "Please choose to redo or reject.").grid(column = 0,  row = 1, padx=10, columnspan = 2)
+
+  redobutton = Button(resulterror, text = 'Redo', command = redoassay).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+  rejectbutton = Button(resulterror, text = 'Reject', command = rejectassay).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
+
+def loadlastweighttable():
+  mycursor.execute("SELECT user.name AS customer, assayresult.itemcode AS itemcode, assayresult.fwa AS fwa, assayresult.fwb AS fwb, assayresult.lwa AS lwa, assayresult.lwb AS lwb, assayresult.silverpct AS silverpct, assayresult.finalresult AS finalresult, assayresult.resulta AS resulta, assayresult.resultb AS resultb, assayresult.preresult AS preresult, assayresult.loss AS loss, assayresult.color AS color, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode, assayresult.created")
+  dbresult = mycursor.fetchall()
+  loadlwtable = []
+  for x in dbresult:
+    newx = list(x)
+    if newx[12] == 1:
+      newx[12] = True
+    else:
+      newx[12] = False
+    loadlwtable.append(newx)
+  for record in loadlwtable:
+    if record[5]:
+      pass
+    else:
+      global lwselected
+      lwselected = record
+      break
+  for record in loadlwtable:
+    if record[12] == True:
+      if record[7] == -1:
+        record[7] = "Reject"
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("true","reject"))
+      elif record[7] == None and record[4] != None and record[5] != None:
+        record[7] = "Redo"
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("true", "redo"))
+      else:
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("true"))
+    else:
+      if record[7] == -1:
+        record[7] = "Reject"
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("false","reject"))
+      elif record[7] == None and record[4] != None and record[5] != None:
+        record[7] = "Redo"
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("false", "redo"))
+      else:
+        lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("false"))
+  lw_table.tag_configure('true', background='lightcyan')
+  lw_table.tag_configure('false', background='plum')
+  lw_table.tag_configure('reject', foreground='red')
+  lw_table.tag_configure('redo', foreground='red')
+  lw_table.selection_set(lwselected[13])
+  lw_table.focus(lwselected[13])
+
+def displaylw(a):
+  curItem = lw_table.focus()
+  print(lw_table.item(curItem).get('values'))
+  global lwselected
+  lwselected = lw_table.item(curItem).get('values')
+  customerlw.set(lwselected[0])
+  itemcodelw.set(lwselected[1])
+  lwfwa.set(lwselected[2])
+  lwfwb.set(lwselected[3])
+  ra.set(lwselected[8])
+  rb.set(lwselected[9])
+  avg_result.set(lwselected[10])
+  loss.set(lwselected[11])
+  result.set(lwselected[7])
+  if lwselected[4] == 'None' and lwselected[5] == 'None':
+    lwa.set("")
+    lwb.set("")
+    lwa_entry.configure(state = 'normal')
+    lwb_entry.configure(state = 'normal')
+    lwa_entry.focus_set()
+  else:
+    lwa.set(lwselected[4])
+    lwb.set(lwselected[5])
+    lwa_entry.configure(state = 'disabled')
+    lwb_entry.configure(state = 'disabled')
+def focuslwb(event):
+  lwb_entry.focus_set()
+def submitlw(a): 
+  lastweighta = Decimal(lwa_entry.get())
+  lastweightb = Decimal(lwb_entry.get())
+  firstweighta = Decimal(lwfwa_entry.get())
+  firstweightb = Decimal(lwfwb_entry.get())
+  resulta = round(1000*(lastweighta/firstweighta), 1)
+  resultb = round(1000*(lastweightb/firstweightb), 1)
+  finalresult = 0
+  if abs(resulta - resultb) < 1:
+    preresult = (resulta + resultb)/2
+    mycursor.execute("SELECT * FROM loss ORDER BY low DESC")
+    dbresult = mycursor.fetchall()
+    currentloss = 0
+    for x in dbresult:
+      if x[1] <= preresult <= x[2]:
+        currentloss = x[3]
+        break
+    finalresult = preresult - currentloss
+    global lwselected
+    id = lwselected[13]
+    global now
+    #update record using id
+    sql = "UPDATE assayresult SET lwa = %s, lwb = %s, resulta = %s, resultb = %s, preresult = %s, loss = %s, finalresult = %s, modified = %s WHERE id = %s"
+    val = (lastweighta, lastweightb, resulta, resultb, preresult, currentloss, finalresult, now, id)
+    mycursor.execute(sql, val)
+    assaydb.commit()
+    for i in lw_table.get_children():
+      lw_table.delete(i)
+    loadlastweighttable()
+    lwa_entry.focus_set()
+    root.after(1, resultwindow, lwselected[0], lwselected[1], preresult, currentloss, finalresult, id)
+  else:
+    root.after(1, resulterror, lastweighta, lastweightb, resulta, resultb, finalresult)
+def editlw():
+  lwa_entry.configure(state = 'normal')
+  lwb_entry.configure(state = 'normal')
+  lwa_entry.focus_set()
+
 # tab 3 - last weight #
 # frame for info
 lw_info_frame = ttk.Frame(tab3)
 lw_info_frame.grid(column = 0,  row = 0)
+customerlw = StringVar()
+itemcodelw = StringVar()
 ttk.Label(lw_info_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(lw_info_frame,  text ="Kedai Emas Sangat Panjang").grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(lw_info_frame,  textvariable = customerlw).grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
 ttk.Label(lw_info_frame,  text ="Item Code").grid(column = 0,  row = 2, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(lw_info_frame,  text ="Clicked Item Code").grid(column = 0,  row = 3, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(lw_info_frame,  textvariable = itemcodelw).grid(column = 0,  row = 3, padx = (5,0),pady = (10,0), sticky=W)
 # frame for entry and calculation
 lw_entry_frame = ttk.Frame(tab3)
 lw_entry_frame.grid(column = 1,  row = 0)
@@ -1070,9 +1292,11 @@ ttk.Label(lw_entry_frame,  text ="Last Weight").grid(column = 1,  row = 0)
 lwa = IntVar()
 lwa_entry = Entry(lw_entry_frame, textvariable = lwa)
 lwa_entry.grid(column = 1,  row = 1)
+lwa_entry.bind('<Return>', focuslwb)
 lwb = IntVar()
 lwb_entry = Entry(lw_entry_frame, textvariable = lwb)
 lwb_entry.grid(column = 1,  row = 2)
+lwb_entry.bind('<Return>', submitlw)
 ttk.Label(lw_entry_frame,  text ="/").grid(column = 2,  row = 1, padx = 5)
 ttk.Label(lw_entry_frame,  text ="/").grid(column = 2,  row = 2, padx = 5)
 ttk.Label(lw_entry_frame,  text ="First Weight").grid(column = 3,  row = 0)
@@ -1107,7 +1331,7 @@ result_entry.grid(column = 11,  row = 1, rowspan = 2)
 #edit button
 lw_edit_frame = ttk.Frame(tab3)
 lw_edit_frame.grid(column = 2,  row = 0)
-edit_lw = ttk.Button(lw_edit_frame, text = 'EDIT')
+edit_lw = ttk.Button(lw_edit_frame, text = 'EDIT', command= editlw)
 edit_lw.grid(column = 0,  row = 0, padx = 10, ipadx = 10, ipady = 10, rowspan = 2)
 # Last Weight Table
 lw_table_frame = ttk.Frame(tab3)
@@ -1138,6 +1362,8 @@ lw_table.heading("5", text ="Last A")
 lw_table.heading("6", text ="Last B")
 lw_table.heading("7", text ="%")
 lw_table.heading("8", text ="Result")
+loadlastweighttable()
+lw_table.bind('<<TreeviewSelect>>', displaylw)
 
 # tab 4 - sample return#
 # frame for info
