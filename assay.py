@@ -17,6 +17,7 @@ fwselected = []
 lwselected = []
 lossmode = "new"
 lossselected = []
+srselected = []
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -1075,6 +1076,9 @@ def resultwindow(customer, itemcode, preresult, currentloss, finalresult, id):
     for i in lw_table.get_children():
       lw_table.delete(i)
     loadlastweighttable()
+    for i in sr_table.get_children():
+      sr_table.delete(i)
+    loadsamplereturntable()
 
   resultwindow = Toplevel(root)
   resultwindow.grab_set()
@@ -1122,13 +1126,12 @@ def resultwindow(customer, itemcode, preresult, currentloss, finalresult, id):
   button = ttk.Button(button_frame, text = 'Ok', command = closewindow)
   button.grid(column = 0,  row = 0, padx = 10, ipadx = 10, ipady = 10)
 
-
 def resulterror(lastweighta, lastweightb, resulta, resultb, finalresult):
   resulterror = Toplevel(root)
   resulterror.grab_set()
 
   def redoassay():
-    finalresult = None
+    finalresult = -2
     global lwselected
     id = lwselected[13]
     global now
@@ -1140,6 +1143,7 @@ def resulterror(lastweighta, lastweightb, resulta, resultb, finalresult):
     for i in lw_table.get_children():
       lw_table.delete(i)
     loadlastweighttable()
+    loadsamplereturntable()
     resulterror.destroy()
     lwa_entry.focus_set()
   def rejectassay():
@@ -1155,6 +1159,9 @@ def resulterror(lastweighta, lastweightb, resulta, resultb, finalresult):
     for i in lw_table.get_children():
       lw_table.delete(i)
     loadlastweighttable()
+    for i in sr_table.get_children():
+      sr_table.delete(i)
+    loadsamplereturntable()
     resulterror.destroy()
     lwa_entry.focus_set()
 
@@ -1187,7 +1194,7 @@ def loadlastweighttable():
       if record[7] == -1:
         record[7] = "Reject"
         lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("true","reject"))
-      elif record[7] == None and record[4] != None and record[5] != None:
+      elif record[7] == -2:
         record[7] = "Redo"
         lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("true", "redo"))
       else:
@@ -1196,7 +1203,7 @@ def loadlastweighttable():
       if record[7] == -1:
         record[7] = "Reject"
         lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("false","reject"))
-      elif record[7] == None and record[4] != None and record[5] != None:
+      elif record[7] == -2:
         record[7] = "Redo"
         lw_table.insert("", 'end', text ="L1", iid=record[13], values =record, tags = ("false", "redo"))
       else:
@@ -1264,6 +1271,9 @@ def submitlw(a):
     for i in lw_table.get_children():
       lw_table.delete(i)
     loadlastweighttable()
+    for i in sr_table.get_children():
+      sr_table.delete(i)
+    loadsamplereturntable()
     lwa_entry.focus_set()
     root.after(1, resultwindow, lwselected[0], lwselected[1], preresult, currentloss, finalresult, id)
   else:
@@ -1365,20 +1375,100 @@ lw_table.heading("8", text ="Result")
 loadlastweighttable()
 lw_table.bind('<<TreeviewSelect>>', displaylw)
 
+def loadsamplereturntable():
+  mycursor.execute("SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.color AS color, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id ORDER BY assayresult.formcode, assayresult.created")
+  dbresult = mycursor.fetchall()
+  loadsrtable = []
+  for x in dbresult:
+    newx = list(x)
+    if newx[6] == 1:
+      newx[6] = True
+    else:
+      newx[6] = False
+    loadsrtable.append(newx)
+  for record in loadsrtable:
+    if record[5]:
+      pass
+    else:
+      global srselected
+      srselected = record
+      break
+  for record in loadsrtable:
+    if record[6] == True:
+      if record[3] == -1:
+        record[3] = "Reject"
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("true","reject"))
+      elif record[3] == -2:
+        record[3] = "Redo"
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("true", "redo"))
+      else:
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("true"))
+    else:
+      if record[3] == -1:
+        record[3] = "Reject"
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("false","reject"))
+      elif record[3] == -2:
+        record[3] = "Redo"
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("false", "redo"))
+      else:
+        sr_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("false"))
+  sr_table.tag_configure('true', background='lightcyan')
+  sr_table.tag_configure('false', background='plum')
+  sr_table.tag_configure('reject', foreground='red')
+  sr_table.tag_configure('redo', foreground='red')
+  sr_table.selection_set(srselected[7])
+  sr_table.focus(srselected[7])
+def submitreturn(a):
+  samplereturn = Decimal(sr_entry.get())
+  id= srselected[7]
+  sql = "UPDATE assayresult SET samplereturn = %s, modified = %s WHERE id = %s"
+  val = (samplereturn, now, id)
+  mycursor.execute(sql, val)
+  assaydb.commit()
+  for i in sr_table.get_children():
+    sr_table.delete(i)
+  loadsamplereturntable()
+def displaysr(a):
+  curItem = sr_table.focus()
+  print(sr_table.item(curItem).get('values'))
+  global srselected
+  srselected = sr_table.item(curItem).get('values')
+  customersr.set(srselected[0])
+  itemcodesr.set(srselected[2])
+  sampleweightsr.set(srselected[4])
+  if srselected[5] == 'None':
+    sr.set("")
+    sr_entry.configure(state = 'normal')
+    sr_entry.focus_set()
+  else:
+    sr.set(srselected[5])
+    sr_entry.configure(state = 'disabled')
+
+def editsr():
+  sr_entry.configure(state = 'normal')
+  sr_entry.focus_set()
 # tab 4 - sample return#
 # frame for info
 sr_info_frame = ttk.Frame(tab4)
 sr_info_frame.grid(column = 0,  row = 0)
+customersr = StringVar()
+itemcodesr = StringVar()
+sampleweightsr = StringVar()
 ttk.Label(sr_info_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(sr_info_frame,  text ="Kedai Emas Sangat Panjang").grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  textvariable = customersr).grid(column = 0, row = 1, padx = (5,0),pady = (10,0), sticky=W)
 ttk.Label(sr_info_frame,  text ="Item Code").grid(column = 1,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(sr_info_frame,  text ="Clicked Item Code").grid(column = 1,  row = 1, padx = (5,0),pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  textvariable = itemcodesr).grid(column = 1,  row = 1, padx = (5,0),pady = (10,0), sticky=W)
 ttk.Label(sr_info_frame,  text ="Sample Weight (g)").grid(column = 2,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
-ttk.Label(sr_info_frame,  text ="1.36").grid(column = 2,  row = 1, padx = (5,0),pady = (10,0), sticky=W)
-ttk.Label(sr_info_frame,  text ="Sample Return (g)").grid(column = 3,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
+ttk.Label(sr_info_frame,  textvariable = sampleweightsr).grid(column = 2, row = 1, padx = (5,0),pady = (10,0), sticky=W)
 sr = DoubleVar()
 sr_entry = Entry(sr_info_frame, textvariable = sr)
 sr_entry.grid(column = 3,  row = 1)
+sr_entry.bind('<Return>', submitreturn)
+#edit button
+sr_edit_frame = ttk.Frame(tab4)
+sr_edit_frame.grid(column = 2,  row = 0)
+edit_sr = ttk.Button(sr_edit_frame, text = 'EDIT', command= editsr)
+edit_sr.grid(column = 0,  row = 0, padx = 10, ipadx = 10, ipady = 10, rowspan = 2)
 # Sample Return Table
 sr_table_frame = ttk.Frame(tab4)
 sr_table_frame.grid(column = 0,  row = 1, columnspan = 3, pady = 20)
@@ -1404,6 +1494,8 @@ sr_table.heading("3", text ="Item Code")
 sr_table.heading("4", text ="Result")
 sr_table.heading("5", text ="Sample Weight")
 sr_table.heading("6", text ="Sample Return")
+loadsamplereturntable()
+sr_table.bind('<<TreeviewSelect>>', displaysr)
 
 # tab 5 - search history
 # frame for info
