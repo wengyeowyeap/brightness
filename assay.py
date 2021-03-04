@@ -375,7 +375,6 @@ class NewFormCode(Toplevel):
     if myresult:
       for x in myresult:
         cl.append(x[9])
-    
     showformcode = StringVar()
     setformcode()    
     #New Formcode Button
@@ -1505,81 +1504,122 @@ ttk.Label(filter_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,
 # Function for checking the key pressed and updating the listbox 
 def checkkeytab5(event): 
   if event.keysym=='Down':
-    lb.focus_set()
-    lb.select_set(0) #This only sets focus on the first item.
-    lb.event_generate("<<ListboxSelect>>")
+    lbsearch.focus_set()
+    lbsearch.select_set(0) #This only sets focus on the first item.
+    lbsearch.event_generate("<<ListboxSelect>>")
   elif event.keysym=='Return':
-    item_code_entry.focus_set()
+    search_code_entry.focus_set()
   else:
     value = event.widget.get() 
     print(value)     
-    # get data from l 
+    # get data from clsearch 
     if value == '': 
-        data = l
-        updatetab5(data)
-        lb.pack_forget()
+      data = clsearch
+      updatetab5(data)
+      lbsearch.pack_forget()
     else: 
-        data = [] 
-        for item in l: 
-            if value.lower() in item.lower(): 
-                data.append(item)
-                updatetab5(data)
-                lb.pack()
+      data = [] 
+      for item in clsearch: 
+        if value.lower() in item.lower(): 
+          data.append(item)
+          updatetab5(data)
+          lbsearch.pack()
 def updatetab5(data): 
   # clear previous data 
-  lb.delete(0, 'end') 
+  lbsearch.delete(0, 'end') 
   # put new data 
-  for item in data: 
-      lb.insert('end', item) 
+  for item in data:
+    lbsearch.insert('end', item) 
 def selectcustomertab5(event):
   selection = event.widget.curselection()
-  lb.pack_forget()
+  lbsearch.pack_forget()
   if selection:
       index = selection[0]
-      customer.set(event.widget.get(index))
+      customersearch.set(event.widget.get(index))
       customer_entry.focus_set()
-# Driver code 
-l = ['C','C++','Java', 
-    'Python','Perl', 
-    'PHP','ASP','JS',
-    "apple", "banana", "cherry", 
-    "orange", "kiwi", "melon", "mango",
-    "Rice", "Chickpeas", "Pulses", "bread", "meat",
-    "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-    "Chicken Pie", "Apple Pie", "Pudding" ]
+def submitsearch():
+  print(customersearch_entry.get())
+  print(search_code_entry.get())
+  print(start_cal.get_date())
+  print(end_cal.get_date())
+  if customersearch_entry.get() and search_code_entry.get():
+    sql = "SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.created AS created, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id WHERE user.name LIKE %s and assayresult.itemcode LIKE %s and assayresult.created >= %s and assayresult.created <= %s ORDER BY assayresult.formcode, assayresult.created"
+    val = (customersearch_entry.get(), search_code_entry.get(), start_cal.get_date(), end_cal.get_date())
+    mycursor.execute(sql, val)
+    dbresult = mycursor.fetchall()
+  elif customersearch_entry.get() and search_code_entry.get() == "":
+    sql = "SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.created AS created, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id WHERE user.name LIKE %s and assayresult.created >= %s and assayresult.created <= %s ORDER BY assayresult.formcode, assayresult.created"
+    val = (customersearch_entry.get(), start_cal.get_date(), end_cal.get_date())
+    mycursor.execute(sql, val)
+    dbresult = mycursor.fetchall()
+  elif customersearch_entry.get() == "" and search_code_entry.get():
+    sql = "SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.created AS created, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id WHERE assayresult.itemcode LIKE %s and assayresult.created >= %s and assayresult.created <= %s ORDER BY assayresult.formcode, assayresult.created"
+    val = (search_code_entry.get(), start_cal.get_date(), end_cal.get_date())
+    mycursor.execute(sql, val)
+    dbresult = mycursor.fetchall()
+  else:
+    sql = "SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.created AS created, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id WHERE assayresult.created >= %s and assayresult.created <= %s ORDER BY assayresult.formcode, assayresult.created"
+    val = (start_cal.get_date(), end_cal.get_date())
+    mycursor.execute(sql, val)
+    dbresult = mycursor.fetchall()
+  print(dbresult)
+  for i in sh_table.get_children():
+    sh_table.delete(i)
+  loadshtable = []
+  for x in dbresult:
+    newx = list(x)
+    loadshtable.append(newx)
+  for record in loadshtable:
+    if record[3] == -1:
+      record[3] = "Reject"
+      sh_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("reject"))
+    elif record[3] == -2:
+      record[3] = "Redo"
+      sh_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ( "redo"))
+    else:
+      sh_table.insert("", 'end', text ="L1", iid=record[7], values =record, tags = ("normal"))
+  sh_table.tag_configure('normal', background='white')
+  sh_table.tag_configure('reject', foreground='red', background='white')
+  sh_table.tag_configure('redo', foreground='red', background='white')
+#get customer from db
+mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+myresult = mycursor.fetchall()
+clsearch = []
+if myresult:
+  for x in myresult:
+    clsearch.append(x[9])
 # Combobox creation
 # create a frame 
 customer_input_frame = Frame(filter_frame)
 customer_input_frame.grid(column = 0,  row = 1)
 # If customer not in list, pop up add new customer fw_pct_frame
-customer = StringVar() 
-customer_entry = Entry(customer_input_frame, textvariable=customer) 
-customer_entry.pack() 
-customer_entry.bind('<KeyRelease>', checkkeytab5) 
+customersearch = StringVar() 
+customersearch_entry = Entry(customer_input_frame, textvariable=customersearch) 
+customersearch_entry.pack() 
+customersearch_entry.bind('<KeyRelease>', checkkeytab5) 
 #creating list box 
-lb = Listbox(customer_input_frame)
-lb.pack()
-lb.pack_forget()
-updatetab5(l) 
-lb.bind("<KeyRelease-Return>", selectcustomertab5)
-lb.bind("<ButtonRelease-1>", selectcustomertab5)
-lb.bind("<Double-Button-1>", selectcustomertab5)
+lbsearch = Listbox(customer_input_frame)
+lbsearch.pack()
+lbsearch.pack_forget()
+updatetab5(clsearch) 
+lbsearch.bind("<KeyRelease-Return>", selectcustomertab5)
+lbsearch.bind("<ButtonRelease-1>", selectcustomertab5)
+lbsearch.bind("<Double-Button-1>", selectcustomertab5)
 ttk.Label(filter_frame,  text ="Item Code").grid(column = 0,  row = 2, padx = (5,0), pady = (10,0), sticky=W)
+#itemcode entry
 search_code = StringVar() 
-search_code_entry = Entry(filter_frame, textvariable=search_code).grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
+search_code_entry = Entry(filter_frame, textvariable=search_code)
+search_code_entry.grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
 # frame for date
 date_frame = Frame(filter_frame)
 date_frame.grid(column = 0,  row = 4)
-def print_sel():
-    print(start_cal.get_date())
-    print(end_cal.get_date())
 ttk.Label(date_frame, text='Start date').pack()
 start_cal = DateEntry(date_frame, width=12, background='darkblue', foreground='white', date_pattern = 'dd-mm-y', maxdate= today, showothermonthdays = False, showweeknumbers = False, weekendbackground = '#DCDCDC')
 start_cal.pack(padx=5, pady=5)
 ttk.Label(date_frame, text='End date').pack()
 end_cal = DateEntry(date_frame, width=12, background='darkblue', foreground='white', date_pattern = 'dd-mm-y', maxdate= today, showothermonthdays = False, showweeknumbers = False, weekendbackground = '#DCDCDC')
 end_cal.pack(padx=5, pady=5)
-ttk.Button(filter_frame, text="Search", command=print_sel).grid(column = 0,  row = 5)
+ttk.Button(filter_frame, text="Search", command=submitsearch).grid(column = 0,  row = 5)
 # Search History Table
 sh_table_frame = ttk.Frame(tab5)
 sh_table_frame.grid(column = 1,  row = 0, pady = 20)
@@ -1587,7 +1627,7 @@ sh_table_frame.grid(column = 1,  row = 0, pady = 20)
 sh_table_scroll = ttk.Scrollbar(sh_table_frame, orient ="vertical") 
 sh_table_scroll.pack(side ='right', fill='y')
 # sh table # 
-sh_table = ttk.Treeview(sh_table_frame, selectmode ='browse', height = 20, yscrollcommand = sh_table_scroll.set, columns = ("1", "2", "3", "4", "5", "6"), show = 'headings') 
+sh_table = ttk.Treeview(sh_table_frame, selectmode ='browse', height = 20, yscrollcommand = sh_table_scroll.set, columns = ("1", "2", "3", "4", "5", "6", "7"), show = 'headings') 
 sh_table.pack(side ='left')
 # Configuring scrollbar 
 sh_table_scroll.configure(command = sh_table.yview) 
@@ -1597,7 +1637,8 @@ sh_table.column("2", width = 100, anchor ='c')
 sh_table.column("3", width = 100, anchor ='c') 
 sh_table.column("4", width = 100, anchor ='c') 
 sh_table.column("5", width = 100, anchor ='c') 
-sh_table.column("6", width = 100, anchor ='c') 
+sh_table.column("6", width = 100, anchor ='c')
+sh_table.column("7", width = 100, anchor ='c') 
 # Assigning the heading names to the respective columns 
 sh_table.heading("1", text ="Customer") 
 sh_table.heading("2", text ="Form Code")
@@ -1605,15 +1646,16 @@ sh_table.heading("3", text ="Item Code")
 sh_table.heading("4", text ="Result")
 sh_table.heading("5", text ="Sample Weight")
 sh_table.heading("6", text ="Sample Return")
+sh_table.heading("7", text ="Date")
 
 
 # tab 6 - customer list
 # frame for info
 customer_filter_frame = ttk.Frame(tab6)
 customer_filter_frame.grid(column = 0,  row = 0, sticky = N)
-ttk.Button(customer_filter_frame, text="NEW", command=print_sel).grid(column = 0,  row = 0)
-ttk.Button(customer_filter_frame, text="EDIT", command=print_sel).grid(column = 0,  row = 1)
-ttk.Button(customer_filter_frame, text="DELETE", command=print_sel).grid(column = 0,  row = 2)
+ttk.Button(customer_filter_frame, text="NEW").grid(column = 0,  row = 0)
+ttk.Button(customer_filter_frame, text="EDIT").grid(column = 0,  row = 1)
+ttk.Button(customer_filter_frame, text="DELETE").grid(column = 0,  row = 2)
 ttk.Label(customer_filter_frame,  text ="Customer").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
 # Function for checking the key pressed and updating the listbox 
 def checkkeytab6(event): 
@@ -1677,7 +1719,7 @@ updatetab6(l)
 lb.bind("<KeyRelease-Return>", selectcustomertab6)
 lb.bind("<ButtonRelease-1>", selectcustomertab6)
 lb.bind("<Double-Button-1>", selectcustomertab6)
-ttk.Button(customer_filter_frame, text="Search", command=print_sel).grid(column = 0,  row = 5)
+ttk.Button(customer_filter_frame, text="Search").grid(column = 0,  row = 5)
 # Customer Table
 cl_table_frame = ttk.Frame(tab6)
 cl_table_frame.grid(column = 1,  row = 0, pady = 20)
