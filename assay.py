@@ -18,6 +18,7 @@ lwselected = []
 lossmode = "new"
 lossselected = []
 srselected = []
+clselected = []
 
 def printersetting():
   printersetting = Toplevel(root)
@@ -120,7 +121,6 @@ def assaysetting():
       loss_table.insert("", 'end', text ="L1", values =record)
   def displayloss(a):
     curItem = loss_table.focus()
-    print(loss_table.item(curItem).get('values'))
     global lossselected
     lossselected = loss_table.item(curItem).get('values')
     low.set(lossselected[0])
@@ -134,18 +134,12 @@ def assaysetting():
   def focusloss(event):
     losssetting_entry.focus_set()
   def submitloss(a):
-    lowentry = low_entry.get()
-    highentry = high_entry.get()
-    losssettingentry = losssetting_entry.get() 
-    print("LOW : " + lowentry)
-    print("HIGH : " + highentry)
-    print("LOSS : "+ losssettingentry)
     global now
     global lossmode
     if lossmode == "new":
       #insert new
       sql = "INSERT INTO loss (low, high, pct, created, modified) VALUES (%s, %s, %s, %s, %s)"
-      val = (lowentry, highentry, losssettingentry, now, now)
+      val = (low_entry.get(), high_entry.get(), losssetting_entry.get(), now, now)
       mycursor.execute(sql, val)
       assaydb.commit()
       for i in loss_table.get_children():
@@ -342,19 +336,13 @@ class NewFormCode(Toplevel):
       sample_weight_entry.focus_set() 
 
     def submit(event): 
-      code=item_code_entry.get()
-      weight=sample_weight_entry.get()
-      customer=customer_entry.get()
-      print("The code is : " + code)
-      print("The weight is : " + weight)
-      print(customer)
       # search customer id
-      sql = f"SELECT * FROM user WHERE name ='{customer}'"      
+      sql = f"SELECT * FROM user WHERE name ='{customer_entry.get()}'"      
       mycursor.execute(sql)
       customerselected = mycursor.fetchone()
       #insert record
       sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-      val = (now, now, code, weight, colorset, customerselected[0], formcode)
+      val = (now, now, item_code_entry.get(), sample_weight_entry.get(), colorset, customerselected[0], formcode)
       mycursor.execute(sql, val)
       assaydb.commit()
       for i in left_table.get_children():
@@ -489,19 +477,13 @@ class NewRound(Toplevel):
     def focusweight(event):
       sample_weight_entry.focus_set() 
     def submit(event): 
-      code=item_code_entry.get()
-      weight=sample_weight_entry.get()
-      customer=customer_entry.get()
-      print("The code is : " + code)
-      print("The weight is : " + weight)
-      print(customer)
       # search customer id
-      sql = f"SELECT * FROM user WHERE name ='{customer}'"      
+      sql = f"SELECT * FROM user WHERE name ='{customer_entry.get()}'"      
       mycursor.execute(sql)
       customerselected = mycursor.fetchone()
       #insert record
       sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-      val = (now, now, code, weight, colorset, customerselected[0], formcode)
+      val = (now, now, item_code_entry.get(), sample_weight_entry.get(), colorset, customerselected[0], formcode)
       mycursor.execute(sql, val)
       assaydb.commit()
       for i in left_table.get_children():
@@ -576,24 +558,18 @@ class EditRecord(Toplevel):
     # Function for checking the key pressed and updating the listbox 
 
     def focusweight(event):
-      print(sample_weight_entry)
       sample_weight_entry.focus_set() 
 
     def focusok(event):
-      print(editok)
       editok.focus_set() 
 
     def editassay(): 
-      code=item_code_entry.get()
-      weight=sample_weight_entry.get()
-      print("The code is : " + code)
-      print("The weight is : " + weight)
       global mainselected
       id = mainselected[8]
       global now
       #update record using id
       sql = "UPDATE assayresult SET itemcode = %s, sampleweight = %s, modified = %s WHERE id = %s"
-      val = (code, weight, now, id)
+      val = (item_code_entry.get(), sample_weight_entry.get(), now, id)
       mycursor.execute(sql, val)
       assaydb.commit()
       for i in left_table.get_children():
@@ -651,18 +627,12 @@ class AddToFormcode(Toplevel):
       addok.focus_set() 
 
     def addassay(): 
-      code=item_code_entry.get()
-      weight=sample_weight_entry.get()
-      print("The code is : " + code)
-      print("The weight is : " + weight)
       sql = f"SELECT * FROM user WHERE name ='{customeraddsql}'"
       mycursor.execute(sql)
       customerselected = mycursor.fetchone()
       #insert record
       sql = "INSERT INTO assayresult (created, modified, itemcode, sampleweight, color, customer, formcode) VALUES (%s, %s, %s, %s, %s, %s, %s)"
-      print(customerselected)
-      print(formcodeadd)
-      val = (now, now, code, weight, colorset, customerselected[0], formcodeaddsql)
+      val = (now, now, item_code_entry.get(), sample_weight_entry.get(), colorset, customerselected[0], formcodeaddsql)
       mycursor.execute(sql, val)
       assaydb.commit()
       for i in left_table.get_children():
@@ -766,7 +736,6 @@ def loadmainrighttable():
 
 def displaymainfromleft(a):
   curItem = left_table.focus()
-  print(left_table.item(curItem).get('values'))
   global mainselected
   mainselected = left_table.item(curItem).get('values')
   selectedfc.set(mainselected[0])
@@ -777,7 +746,6 @@ def displaymainfromleft(a):
 
 def displaymainfromright(a):
   curItem = right_table.focus()
-  print(right_table.item(curItem).get('values'))
   global mainselected
   mainselected = right_table.item(curItem).get('values')
   selectedfc.set(mainselected[0])
@@ -800,7 +768,7 @@ class DeleteRecord(Toplevel):
         assaydb.commit()
         for i in left_table.get_children():
           left_table.delete(i)
-          loadmainlefttable()
+        loadmainlefttable()
         for i in right_table.get_children():
           right_table.delete(i)
         loadmainrighttable()
@@ -811,7 +779,7 @@ class DeleteRecord(Toplevel):
         assaydb.commit()
         for i in left_table.get_children():
           left_table.delete(i)
-          loadmainlefttable()
+        loadmainlefttable()
         for i in right_table.get_children():
           right_table.delete(i)
         loadmainrighttable()
@@ -952,7 +920,6 @@ def loadfirstweighttable():
 
 def displayfw(a):
   curItem = fw_table.focus()
-  print(fw_table.item(curItem).get('values'))
   global fwselected
   fwselected = fw_table.item(curItem).get('values')
   customerfw.set(fwselected[0])
@@ -974,19 +941,13 @@ def focusfwb(event):
   fwb_entry.focus_set()
 def focuspct(event):
   pct_entry.focus_set()
-def submitfw(a): 
-  firstweighta=fwa_entry.get()
-  firstweightb=fwb_entry.get()
-  silver = pct_entry.get() 
-  print("FWA : " + firstweighta)
-  print("FWB : " + firstweightb)
-  print("PCT : "+ silver)
+def submitfw(a):
   global fwselected
   id = fwselected[6]
   global now
   #update record using id
   sql = "UPDATE assayresult SET fwa = %s, fwb = %s, silverpct = %s, modified = %s WHERE id = %s"
-  val = (firstweighta, firstweightb, silver, now, id)
+  val = (fwa_entry.get(), fwb_entry.get(), pct_entry.get() , now, id)
   mycursor.execute(sql, val)
   assaydb.commit()
   for i in fw_table.get_children():
@@ -995,7 +956,6 @@ def submitfw(a):
   fwa_entry.focus_set()
   pct_entry.current(0)
 def editfw():
-  print('enter')
   fwa_entry.configure(state = 'normal')
   fwb_entry.configure(state = 'normal')
   pct_entry.configure(state = 'readonly')
@@ -1216,7 +1176,6 @@ def loadlastweighttable():
 
 def displaylw(a):
   curItem = lw_table.focus()
-  print(lw_table.item(curItem).get('values'))
   global lwselected
   lwselected = lw_table.item(curItem).get('values')
   customerlw.set(lwselected[0])
@@ -1429,7 +1388,6 @@ def submitreturn(a):
   loadsamplereturntable()
 def displaysr(a):
   curItem = sr_table.focus()
-  print(sr_table.item(curItem).get('values'))
   global srselected
   srselected = sr_table.item(curItem).get('values')
   customersr.set(srselected[0])
@@ -1497,10 +1455,6 @@ loadsamplereturntable()
 sr_table.bind('<<TreeviewSelect>>', displaysr)
 
 # tab 5 - search history
-# frame for info
-filter_frame = ttk.Frame(tab5)
-filter_frame.grid(column = 0,  row = 0, sticky = N)
-ttk.Label(filter_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
 # Function for checking the key pressed and updating the listbox 
 def checkkeytab5(event): 
   if event.keysym=='Down':
@@ -1538,10 +1492,6 @@ def selectcustomertab5(event):
       customersearch.set(event.widget.get(index))
       customer_entry.focus_set()
 def submitsearch():
-  print(customersearch_entry.get())
-  print(search_code_entry.get())
-  print(start_cal.get_date())
-  print(end_cal.get_date())
   if customersearch_entry.get() and search_code_entry.get():
     sql = "SELECT user.name AS customer, assayresult.formcode AS formcode, assayresult.itemcode AS itemcode, assayresult.finalresult AS finalresult, assayresult.sampleweight AS sampleweight, assayresult.samplereturn AS samplereturn, assayresult.created AS created, assayresult.id AS id FROM assayresult INNER JOIN user ON assayresult.customer = user.id WHERE user.name LIKE %s and assayresult.itemcode LIKE %s and assayresult.created >= %s and assayresult.created <= %s ORDER BY assayresult.formcode, assayresult.created"
     val = (customersearch_entry.get(), search_code_entry.get(), start_cal.get_date(), end_cal.get_date())
@@ -1562,7 +1512,6 @@ def submitsearch():
     val = (start_cal.get_date(), end_cal.get_date())
     mycursor.execute(sql, val)
     dbresult = mycursor.fetchall()
-  print(dbresult)
   for i in sh_table.get_children():
     sh_table.delete(i)
   loadshtable = []
@@ -1588,6 +1537,10 @@ clsearch = []
 if myresult:
   for x in myresult:
     clsearch.append(x[9])
+# frame for info
+filter_frame = ttk.Frame(tab5)
+filter_frame.grid(column = 0,  row = 0, sticky = N)
+ttk.Label(filter_frame,  text ="Customer").grid(column = 0,  row = 0, padx = (5,0), pady = (10,0), sticky=W)
 # Combobox creation
 # create a frame 
 customer_input_frame = Frame(filter_frame)
@@ -1650,19 +1603,179 @@ sh_table.heading("7", text ="Date")
 
 
 # tab 6 - customer list
-# frame for info
-customer_filter_frame = ttk.Frame(tab6)
-customer_filter_frame.grid(column = 0,  row = 0, sticky = N)
-ttk.Button(customer_filter_frame, text="NEW").grid(column = 0,  row = 0)
-ttk.Button(customer_filter_frame, text="EDIT").grid(column = 0,  row = 1)
-ttk.Button(customer_filter_frame, text="DELETE").grid(column = 0,  row = 2)
-ttk.Label(customer_filter_frame,  text ="Customer").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
+class NewCustomer(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("New Customer") 
+    self.grab_set()
+
+    def focusphone(event):
+      phonecl_entry.focus_set()
+    def focusemail(event):
+      emailcl_entry.focus_set()
+    def focusfax(event):
+      faxcl_entry.focus_set()
+    def focusbutton(event):
+      buttoncl.focus_set()
+    def createcustomer(event):
+      #insert record
+      global now
+      sql = "INSERT INTO user (name, phone, email, fax, role, created, modified) VALUES (%s, %s, %s, %s, %s, %s, %s)"
+      val = (customercl_entry.get(), phonecl_entry.get(), emailcl_entry.get(), faxcl_entry.get(), "customer", now, now)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in cl_table.get_children():
+        cl_table.delete(i)
+      loadcustomertable()
+      #get customer from db
+      mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+      myresult = mycursor.fetchall()
+      global clcl
+      clcl = []
+      if myresult:
+        for x in myresult:
+          clcl.append(x[9])
+      updatetab6(clcl)
+      updatetab5(clcl)
+      self.destroy()
+
+    customercl = StringVar()
+    phonecl = StringVar()
+    emailcl = StringVar()
+    faxcl = StringVar()
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+    customercl_entry = Entry(self, textvariable = customercl)
+    customercl_entry.grid(column = 1,  row = 1)
+    customercl_entry.bind('<Return>', focusphone)
+    Label(self,  text ="Phone: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+    phonecl_entry = Entry(self, textvariable = phonecl)
+    phonecl_entry.grid(column = 1,  row = 2)
+    phonecl_entry.bind('<Return>', focusemail)
+    Label(self,  text ="Email: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+    emailcl_entry = Entry(self, textvariable = emailcl)
+    emailcl_entry.grid(column = 1,  row = 4)
+    emailcl_entry.bind('<Return>', focusfax)
+    Label(self,  text ="Fax: ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+    faxcl_entry = Entry(self, textvariable = faxcl)
+    faxcl_entry.grid(column = 1,  row = 5)
+    faxcl_entry.bind('<Return>', focusbutton)
+    buttoncl = ttk.Button(self, text="Submit")
+    buttoncl.grid(column = 0,  row = 6, columnspan = 2)
+    buttoncl.bind("<KeyRelease-Return>", createcustomer)
+    buttoncl.bind("<ButtonRelease-1>", createcustomer)
+
+class EditCustomer(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("New Customer") 
+    self.grab_set()
+
+    def focusemail(event):
+      emailcl_entry.focus_set()
+    def focusfax(event):
+      faxcl_entry.focus_set()
+    def focusbutton(event):
+      buttoncl.focus_set()
+    def editcustomer(event):
+      #insert record
+      global now
+      global clselected
+      id= clselected[4]
+      sql = "UPDATE user SET phone = %s, email = %s, fax = %s, modified = %s WHERE id = %s"
+      val = (phonecl_entry.get(), emailcl_entry.get(), faxcl_entry.get(), now, id)
+      mycursor.execute(sql, val)
+      assaydb.commit()
+      for i in cl_table.get_children():
+        cl_table.delete(i)
+      loadcustomertable()
+      #get customer from db
+      mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+      myresult = mycursor.fetchall()
+      global clcl
+      clcl = []
+      if myresult:
+        for x in myresult:
+          clcl.append(x[9])
+      updatetab6(clcl)
+      updatetab5(clcl)
+      self.destroy()
+
+    global clselected
+    customercl = StringVar()
+    phonecl = StringVar()
+    emailcl = StringVar()
+    faxcl = StringVar()
+    customercl.set(clselected[0])
+    phonecl.set(clselected[1])
+    emailcl.set(clselected[2])
+    faxcl.set(clselected[3])
+    Label(self,  text ="Customer: ").grid(column = 0,  row = 1, padx = (5,0), pady = (10,0))
+    customercl_label = Label(self, textvariable = customercl)
+    customercl_label.grid(column = 1,  row = 1)
+    Label(self,  text ="Phone: ").grid(column = 0,  row = 2, padx = (15,0), pady = (10,0))
+    phonecl_entry = Entry(self, textvariable = phonecl)
+    phonecl_entry.grid(column = 1,  row = 2)
+    phonecl_entry.bind('<Return>', focusemail)
+    Label(self,  text ="Email: ").grid(column = 0,  row = 4, padx = (5,0), pady = (10,0))
+    emailcl_entry = Entry(self, textvariable = emailcl)
+    emailcl_entry.grid(column = 1,  row = 4)
+    emailcl_entry.bind('<Return>', focusfax)
+    Label(self,  text ="Fax: ").grid(column = 0,  row = 5, padx = (5,0), pady = 10)
+    faxcl_entry = Entry(self, textvariable = faxcl)
+    faxcl_entry.grid(column = 1,  row = 5)
+    faxcl_entry.bind('<Return>', focusbutton)
+    buttoncl = ttk.Button(self, text="Submit")
+    buttoncl.grid(column = 0,  row = 6, columnspan = 2)
+    buttoncl.bind("<KeyPress-Return>", editcustomer)
+    buttoncl.bind("<ButtonRelease-1>", editcustomer)
+
+class DeleteCustomer(Toplevel): 
+  def __init__(self, master = None): 
+    super().__init__(master = master) 
+    self.title("Delete Customer")
+    self.grab_set()
+
+    def deletecustomer():
+      global clselected
+      sql = f"DELETE FROM user WHERE id = '{clselected[4]}'"
+      mycursor.execute(sql)
+      assaydb.commit()
+      for i in cl_table.get_children():
+        cl_table.delete(i)
+      loadcustomertable()
+      self.destroy()
+    global clselected
+    if clselected:
+      deleteq = StringVar()
+      deleteitemverify = StringVar()
+      deleteq.set(f"Delete this customer?")
+      deleteitemverify.set(f"{clselected[0]}")
+      
+      Label(self,  textvariable = deleteq).grid(column = 0,  row = 0, padx=10, columnspan = 2)
+      Label(self,  textvariable = deleteitemverify).grid(column = 0,  row = 1, padx=10, columnspan = 2)
+
+      deleteok = Button(self, text = 'Ok', command = deletecustomer).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+      deletecancel = Button(self, text = 'Cancel', command = self.destroy).grid(column = 1,  row = 2, ipadx = 5, ipady = 5)
+    else:
+      Label(self,  text = 'Please select a customer!').grid(column = 0,  row = 0, padx=10)
+      Button(self, text = 'Ok', command = self.destroy).grid(column = 0,  row = 2, ipadx = 5, ipady = 5)
+    
 # Function for checking the key pressed and updating the listbox 
+def loadcustomertable():
+  mycursor.execute("SELECT name, phone, email, fax, id FROM user WHERE role ='customer' ORDER BY name, created")
+  dbresult = mycursor.fetchall()
+  global clselected
+  clselected = dbresult[0]
+  for record in dbresult:
+    cl_table.insert("", 'end', text ="L1", iid=record[4], values =record)
+    cl_table.selection_set(clselected[4])
+    cl_table.focus(clselected[4])
+
 def checkkeytab6(event): 
   if event.keysym=='Down':
-    lb.focus_set()
-    lb.select_set(0) #This only sets focus on the first item.
-    lb.event_generate("<<ListboxSelect>>")
+    lbcustomerlist.focus_set()
+    lbcustomerlist.select_set(0) #This only sets focus on the first item.
+    lbcustomerlist.event_generate("<<ListboxSelect>>")
   elif event.keysym=='Return':
     item_code_entry.focus_set()
   else:
@@ -1670,56 +1783,89 @@ def checkkeytab6(event):
     print(value)     
     # get data from l 
     if value == '': 
-        data = l
+        data = clcl
         updatetab6(data)
-        lb.pack_forget()
+        lbcustomerlist.pack_forget()
     else: 
         data = [] 
-        for item in l: 
+        for item in clcl: 
             if value.lower() in item.lower(): 
                 data.append(item)
                 updatetab6(data)
-                lb.pack()
+                lbcustomerlist.pack()
 def updatetab6(data): 
   # clear previous data 
-  lb.delete(0, 'end') 
+  lbcustomerlist.delete(0, 'end') 
   # put new data 
   for item in data: 
-      lb.insert('end', item) 
+    lbcustomerlist.insert('end', item) 
 def selectcustomertab6(event):
   selection = event.widget.curselection()
-  lb.pack_forget()
+  lbcustomerlist.pack_forget()
   if selection:
-      index = selection[0]
-      customer.set(event.widget.get(index))
-      customer_entry.focus_set()
-# Driver code 
-l = ['C','C++','Java', 
-    'Python','Perl', 
-    'PHP','ASP','JS',
-    "apple", "banana", "cherry", 
-    "orange", "kiwi", "melon", "mango",
-    "Rice", "Chickpeas", "Pulses", "bread", "meat",
-    "Milk", "Bacon", "Eggs", "Rice Cooker", "Sauce",
-    "Chicken Pie", "Apple Pie", "Pudding" ]
+    index = selection[0]
+    customersearchcl.set(event.widget.get(index))
+    clcustomer_entry.focus_set()
+def setclselected(a):
+  curItem = cl_table.focus()
+  global clselected
+  clselected = cl_table.item(curItem).get('values')
+def searchcustomer():
+  if clcustomer_entry.get():
+    sql = "SELECT name, phone, email, fax, id FROM user WHERE role = %s and name = %s ORDER BY name, created"
+    val = ("customer", clcustomer_entry.get())
+    mycursor.execute(sql, val)
+    dbresult = mycursor.fetchall()
+    for i in cl_table.get_children():
+      cl_table.delete(i)
+    for record in dbresult:
+      cl_table.insert("", 'end', text ="L1", iid=record[4], values =record)
+    clcustomer_entry.set("")
+  else:
+    pass
+def reloadtable():
+  for i in cl_table.get_children():
+    cl_table.delete(i)
+  loadcustomertable()
+#get customer from db
+mycursor.execute("SELECT * FROM user WHERE role ='customer'")
+myresult = mycursor.fetchall()
+clcl = []
+if myresult:
+  for x in myresult:
+    clcl.append(x[9])
+# frame for info
+customer_filter_frame = ttk.Frame(tab6)
+customer_filter_frame.grid(column = 0,  row = 0, sticky = N)
+newc = ttk.Button(customer_filter_frame, text="NEW")
+newc.grid(column = 0,  row = 0)
+newc.bind("<Button>", lambda e: NewCustomer(root)) 
+editc = ttk.Button(customer_filter_frame, text="EDIT")
+editc.grid(column = 0,  row = 1)
+editc.bind("<Button>", lambda e: EditCustomer(root)) 
+deletec = ttk.Button(customer_filter_frame, text="DELETE")
+deletec.grid(column = 0,  row = 2)
+deletec.bind("<Button>", lambda e: DeleteCustomer(root))
+ttk.Label(customer_filter_frame,  text ="Customer").grid(column = 0,  row = 3, padx = (5,0), pady = (10,0), sticky=W)
 # Combobox creation
 # create a frame 
 customer_input_frame = Frame(customer_filter_frame)
 customer_input_frame.grid(column = 0,  row = 4)
 # If customer not in list, pop up add new customer fw_pct_frame
-customer = StringVar() 
-customer_entry = Entry(customer_input_frame, textvariable=customer) 
-customer_entry.pack() 
-customer_entry.bind('<KeyRelease>', checkkeytab6) 
+customersearchcl = StringVar() 
+clcustomer_entry = Entry(customer_input_frame, textvariable=customersearchcl) 
+clcustomer_entry.pack() 
+clcustomer_entry.bind('<KeyRelease>', checkkeytab6) 
 #creating list box 
-lb = Listbox(customer_input_frame)
-lb.pack()
-lb.pack_forget()
-updatetab6(l) 
-lb.bind("<KeyRelease-Return>", selectcustomertab6)
-lb.bind("<ButtonRelease-1>", selectcustomertab6)
-lb.bind("<Double-Button-1>", selectcustomertab6)
-ttk.Button(customer_filter_frame, text="Search").grid(column = 0,  row = 5)
+lbcustomerlist = Listbox(customer_input_frame)
+lbcustomerlist.pack()
+lbcustomerlist.pack_forget()
+updatetab6(clcl) 
+lbcustomerlist.bind("<KeyPress-Return>", selectcustomertab6)
+lbcustomerlist.bind("<ButtonRelease-1>", selectcustomertab6)
+lbcustomerlist.bind("<Double-Button-1>", selectcustomertab6)
+ttk.Button(customer_filter_frame, text="Search", command = searchcustomer).grid(column = 0,  row = 5)
+ttk.Button(customer_filter_frame, text="Clear Search", command = reloadtable).grid(column = 0,  row = 6, pady= 5)
 # Customer Table
 cl_table_frame = ttk.Frame(tab6)
 cl_table_frame.grid(column = 1,  row = 0, pady = 20)
@@ -1741,5 +1887,7 @@ cl_table.heading("1", text ="Customer")
 cl_table.heading("2", text ="Phone")
 cl_table.heading("3", text ="Email") 
 cl_table.heading("4", text ="Fax")
+loadcustomertable()
+cl_table.bind('<<TreeviewSelect>>', setclselected)
 root.config(menu=menubar)
 root.mainloop()  
